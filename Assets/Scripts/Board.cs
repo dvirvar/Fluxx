@@ -5,8 +5,8 @@ using UnityEngine;
 
 public class Board : MonoBehaviour
 {
-    [SerializeField] Transform deck, discardPile, newRules, currentGoal, secondCurrentGoal;
-    [SerializeField] Transform player1Keepers, player2Keepers, player1Hand, player2Hand;
+    [SerializeField] Transform deckTransform, discardPileTransform, newRulesTransform, currentGoalTransform, secondCurrentGoalTransform;
+    [SerializeField] Transform player1KeepersTransform, player2KeepersTransform, player1HandTransform, player2HandTransform;
     Stack<Card> deckCards = new();
     readonly Stack<Card> discardPileCards = new();
     readonly List<NewRuleCard> newRuleCards = new();
@@ -31,7 +31,7 @@ public class Board : MonoBehaviour
         for (int i = 0; i < cards.Count; i++)
         {
             var card = cards[i];
-            card.transform.SetParent(deck, false);
+            card.transform.SetParent(deckTransform, false);
             card.transform.SetLocalPositionAndRotation(new Vector3(0, 0, i * -spaceBetweenDeckCards), Quaternion.Euler(0,180,0));
         }
         deckCards = new Stack<Card>(cards);
@@ -56,19 +56,19 @@ public class Board : MonoBehaviour
 
     public void AddToDiscardPile(Card card)
     {
-        card.transform.SetParent(discardPile, false);
+        card.transform.SetParent(discardPileTransform, false);
         card.transform.SetLocalPositionAndRotation(new Vector3(0, 0, discardPileCards.Count * -spaceBetweenDeckCards), Quaternion.identity);
         discardPileCards.Push(card);
     }
 
     public void SetCurrentGoal(GoalCard card)
     {
-        SetGoalTo(ref currentGoalCard, currentGoal, card);
+        SetGoalTo(ref currentGoalCard, currentGoalTransform, card);
     }
 
     public void SetSecondCurrentGoal(GoalCard card)
     {
-        SetGoalTo(ref secondCurrentGoalCard, secondCurrentGoal, card);
+        SetGoalTo(ref secondCurrentGoalCard, secondCurrentGoalTransform, card);
     }
 
     private void SetGoalTo(ref GoalCard currentGoalCard, Transform goal, GoalCard goalCard)
@@ -107,7 +107,7 @@ public class Board : MonoBehaviour
 
         newRuleCards.Insert(newRuleCardIndex, newRuleCard);
 
-        newRuleCard.transform.SetParent(newRules, false);
+        newRuleCard.transform.SetParent(newRulesTransform, false);
         newRuleCard.transform.SetLocalPositionAndRotation(new Vector3((newRuleCardIndex % newRuleCardsPerRow) * xSpaceBetweenRuleCards, (newRuleCardIndex / newRuleCardsPerRow) * -ySpaceBetweenRuleCards, 0), Quaternion.identity);
     }
 
@@ -134,14 +134,16 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void AddKeeperToPlayer1(KeeperCard keeperCard)
+    public void AddKeeperTo(GameStateMachine.Player player, KeeperCard keeperCard)
     {
-        AddKeeperTo(player1KeeperCards, player1Keepers, keeperCard);
-    }
-
-    public void AddKeeperToPlayer2(KeeperCard keeperCard)
-    {
-        AddKeeperTo(player2KeeperCards, player2Keepers, keeperCard);
+        List<KeeperCard> keeperCards = GetPlayerKeeperCards(player);
+        Transform keepersTransform = player switch
+        {
+            GameStateMachine.Player.Player1 => player1KeepersTransform,
+            GameStateMachine.Player.Player2 => player2KeepersTransform,
+            _ => throw new System.NotImplementedException(),
+        };
+        AddKeeperTo(keeperCards, keepersTransform, keeperCard);
     }
 
     void AddKeeperTo(List<KeeperCard> keeperCards, Transform keepers, KeeperCard keeperCard)
@@ -151,14 +153,16 @@ public class Board : MonoBehaviour
         keeperCards.Add(keeperCard);
     }
 
-    public void AddCardToPlayer1Hand(Card card)
+    public void AddHandCardTo(GameStateMachine.Player player, Card card)
     {
-        AddCardToPlayerHand(player1HandCards, player1Hand, card);
-    }
-
-    public void AddCardToPlayer2Hand(Card card)
-    {
-        AddCardToPlayerHand(player2HandCards, player2Hand, card);
+        List<Card> handCards = GetPlayerHandCards(player);
+        Transform handCardsTransform = player switch
+        {
+            GameStateMachine.Player.Player1 => player1HandTransform,
+            GameStateMachine.Player.Player2 => player2HandTransform,
+            _ => throw new System.NotImplementedException(),
+        };
+        AddCardToPlayerHand(handCards, handCardsTransform, card);
     }
 
     void AddCardToPlayerHand(List<Card> handCards, Transform hand, Card card)
@@ -168,14 +172,9 @@ public class Board : MonoBehaviour
         handCards.Add(card);
     }
 
-    public void RearrangePlayer1Hand()
+    public void RearrangePlayerHand(GameStateMachine.Player player)
     {
-        RearrangePlayerHand(player1HandCards);
-    }
-
-    public void RearrangePlayer2Hand()
-    {
-        RearrangePlayerHand(player2HandCards);
+        RearrangePlayerHand(GetPlayerHandCards(player));
     }
 
     void RearrangePlayerHand(List<Card> handCards)
@@ -187,14 +186,9 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void ShowPlayer1Hand(bool show)
+    public void ShowPlayerHand(GameStateMachine.Player player, bool show)
     {
-        ShowPlayerHand(show, player1HandCards);
-    }
-
-    public void ShowPlayer2Hand(bool show)
-    {
-        ShowPlayerHand(show, player2HandCards);
+        ShowPlayerHand(show, GetPlayerHandCards(player));
     }
 
     void ShowPlayerHand(bool show, List<Card> handCards)
@@ -209,8 +203,16 @@ public class Board : MonoBehaviour
     public List<NewRuleCard> GetNewRuleCards() => newRuleCards;
     public GoalCard GetCurrentGoalCard() => currentGoalCard;
     public GoalCard GetSecondCurrentGoalCard() => secondCurrentGoalCard;
-    public List<KeeperCard> GetPlayer1KeeperCards() => player1KeeperCards;
-    public List<KeeperCard> GetPlayer2KeeperCards() => player2KeeperCards;
-    public List<Card> GetPlayer1HandCards() => player1HandCards;
-    public List<Card> GetPlayer2HandCards() => player2HandCards;
+    public List<KeeperCard> GetPlayerKeeperCards(GameStateMachine.Player player) => player switch
+    {
+        GameStateMachine.Player.Player1 => player1KeeperCards,
+        GameStateMachine.Player.Player2 => player2KeeperCards,
+        _ => throw new System.NotImplementedException(),
+    };
+    public List<Card> GetPlayerHandCards(GameStateMachine.Player player) => player switch
+    {
+        GameStateMachine.Player.Player1 => player1HandCards,
+        GameStateMachine.Player.Player2 => player2HandCards,
+        _ => throw new System.NotImplementedException(),
+    };
 }

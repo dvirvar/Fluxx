@@ -1,8 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
+using System;
 using UnityEngine;
-using UnityEngine.Video;
+using UnityEngine.Assertions;
+using UnityEngine.LowLevel;
+using System.Linq;
 
 public class GameStateMachine: MonoBehaviour
 {
@@ -17,12 +19,34 @@ public class GameStateMachine: MonoBehaviour
     [HideInInspector] public Player CurrentPlayer = Player.Player1;
     public int Played { get; private set; } = 0;
     public int Drawed { get; private set; } = 0;
-    [HideInInspector] public int currentPlays = 1;
-    [HideInInspector] public int currentDraws = 1;
+    
+    public int CurrentPlays => CurrentPlayRule switch
+    {
+        NewRuleCardType.Play2 => Inflation ? 3 : 2,
+        NewRuleCardType.Play3 => Inflation ? 4 : 3,
+        NewRuleCardType.Play4 => Inflation ? 5 : 4,
+        NewRuleCardType.PlayAllBut1 => Board.GetPlayerHandCards(CurrentPlayer).Count - (Inflation ? 2 : 1) + Played,
+        NewRuleCardType.PlayAll => Board.GetPlayerHandCards(CurrentPlayer).Count + Played,
+        null => 1,
+        _ => throw new NotImplementedException(),
+    };
+    public int CurrentDraws => CurrentDrawRule switch
+    {
+        NewRuleCardType.Draw2 => Inflation ? 3 : 2,
+        NewRuleCardType.Draw3 => Inflation ? 4 : 3,
+        NewRuleCardType.Draw4 => Inflation ? 5 : 4,
+        NewRuleCardType.Draw5 => Inflation ? 6 : 5,
+        null => Inflation ? 2 : 1,
+        _ => throw new NotImplementedException(),
+    };
+    public NewRuleCardType? CurrentPlayRule { get; private set; }
+    public NewRuleCardType? CurrentDrawRule { get; private set; }
+    [HideInInspector] public bool Inflation = false;
+    [HideInInspector] public bool IsFirstPlayRandom = false;
 
     public void Init(State state, Board board)
     {
-        this.Board = board;
+        Board = board;
         SetState(state);
     }
 
@@ -40,7 +64,7 @@ public class GameStateMachine: MonoBehaviour
 
     public void PlayCard(Card card)
     {
-        StartCoroutine(state.Play(card));
+        StartCoroutine(state.Play(this, card));
     }
 
     public void DrawedCard()
@@ -59,6 +83,42 @@ public class GameStateMachine: MonoBehaviour
         Drawed = 0;
     }
 
+    public void DrawToMatchDraws()
+    {
+        for (; Drawed < CurrentDraws; DrawedCard())
+        {
+            var card = Board.DrawCard();
+            if (card == null)
+            {
+                continue;
+            }
+            card.SetCanBeSelected(true);
+            Board.AddHandCardTo(CurrentPlayer, card);
+        }
+    }
+
+    public void SetCurrentPlayRule(NewRuleCardType? rule)
+    {
+        if (rule == null)
+        {
+            CurrentPlayRule = rule;
+            return;
+        }
+        Assert.IsTrue(rule.Value.GetRuleType() == RuleType.Play);
+        CurrentPlayRule = rule;
+    }
+
+    public void SetCurrentDrawRule(NewRuleCardType? rule)
+    {
+        if (rule == null)
+        {
+            CurrentDrawRule = rule;
+            return;
+        }
+        Assert.IsTrue(rule.Value.GetRuleType() == RuleType.Draw);
+        CurrentDrawRule = rule;
+    }
+
     public Player? CheckHasPlayerWon()
     {
         var goalsList = new List<GoalCardInfo>();
@@ -72,96 +132,117 @@ public class GameStateMachine: MonoBehaviour
         {
             goalsList.Add(secondCurrentGoalCard.GoalCardInfo);
         }
+        var playersMatchingGoals = new HashSet<Player>();
         foreach (var goal in goalsList)
         {
             switch (goal.GoalType.GetGoalType())
             {
                 case GoalType.Keepers:
                     var keepersToAchieveGoal = goal.GoalType.GetKeepersToAchieveGoal();
-                    var player1Keepers = Board.GetPlayer1KeeperCards();
-                    foreach (var keeper in keepersToAchieveGoal)
+                    foreach (var player in EnumUtil.GetArrayOf<Player>())
                     {
-                        if (!player1Keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeper))
+                        var keepers = Board.GetPlayerKeeperCards(player);
+                        foreach (var keeper in keepersToAchieveGoal)
                         {
-                            goto p2;
+                            if (!keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeper))
+                            {
+                                goto continueLoop;
+                            }
                         }
+                        playersMatchingGoals.Add(player);
+                        break;
+                    continueLoop: continue;
                     }
-                    return Player.Player1;
-                p2:
-                    var player2Keepers = Board.GetPlayer2KeeperCards();
-                    foreach (var keeper in keepersToAchieveGoal)
-                    {
-                        if (!player2Keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeper))
-                        {
-                            return null;
-                        }
-                    }
-                    return Player.Player2;
+                    break;
                 case GoalType.NumberOfKeepersInPlay:
                     var numberOfKeepersToAchieveGoal = goal.GoalType.GetNumberOfKeepersToAcheiveGoal();
-                    var player1KeepersCount = Board.GetPlayer1KeeperCards().Count;
-                    var player2KeepersCount = Board.GetPlayer2KeeperCards().Count;
-                    if (player1KeepersCount >= numberOfKeepersToAchieveGoal && player2KeepersCount >= numberOfKeepersToAchieveGoal) 
+                    Player? winnerByKeepersCount()
                     {
+                        int numberOfWinners = 0;
+                        Player? winnerPlayer = null;
+                        foreach (var player in EnumUtil.GetArrayOf<Player>())
+                        {
+                            var keepers = Board.GetPlayerKeeperCards(player);
+                            if (keepers.Count >= numberOfKeepersToAchieveGoal)
+                            {
+                                winnerPlayer = player;
+                                ++numberOfWinners;
+                            }
+                        }
+                        if (numberOfWinners == 1)
+                        {
+                            return winnerPlayer;
+                        }
                         return null;
                     }
-                    if (player1KeepersCount >= numberOfKeepersToAchieveGoal)
+                    var wk = winnerByKeepersCount();
+                    if (wk != null)
                     {
-                        return Player.Player1;
-                    }
-                    if (player2KeepersCount >= numberOfKeepersToAchieveGoal)
-                    {
-                        return Player.Player2;
+                        playersMatchingGoals.Add(wk.Value);
                     }
                     break;
                 case GoalType.NumberOfCardsInHand:
                     var numberOfCardsInCardsToAchieveGoal = goal.GoalType.GetNumberOfCardsInHandAcheiveGoal();
-                    var player1CardsCount = Board.GetPlayer1HandCards().Count;
-                    var player2CardsCount = Board.GetPlayer2HandCards().Count;
-                    if (player1CardsCount >= numberOfCardsInCardsToAchieveGoal && player2CardsCount >= numberOfCardsInCardsToAchieveGoal)
+                    Player? winnerByCardsCountInHand()
                     {
+                        int numberOfWinners = 0;
+                        Player? winnerPlayer = null;
+                        foreach (var player in EnumUtil.GetArrayOf<Player>())
+                        {
+                            var keepers = Board.GetPlayerHandCards(player);
+                            if (keepers.Count >= numberOfCardsInCardsToAchieveGoal)
+                            {
+                                winnerPlayer = player;
+                                ++numberOfWinners;
+                            }
+                        }
+                        if (numberOfWinners == 1)
+                        {
+                            return winnerPlayer;
+                        }
                         return null;
                     }
-                    if (player1CardsCount >= numberOfCardsInCardsToAchieveGoal)
+                    var wh = winnerByCardsCountInHand();
+                    if (wh != null)
                     {
-                        return Player.Player1;
-                    }
-                    if (player2CardsCount >= numberOfCardsInCardsToAchieveGoal)
-                    {
-                        return Player.Player2;
+                        playersMatchingGoals.Add(wh.Value);
                     }
                     break;
                 case GoalType.KeeperAndAtLeastOneFood:
                     var keeperForAtLeastOneFoodType = goal.GoalType.GetKeeperForAtLeastOneFoodToAcheiveGoal();
-                    var p1Keepers = Board.GetPlayer1KeeperCards();
-                    if (p1Keepers.Exists(k=> k.KeeperCardInfo.KeeperType == keeperForAtLeastOneFoodType) && p1Keepers.Exists(k => k.KeeperCardInfo.KeeperType.IsFood()))
+                    foreach (var player in EnumUtil.GetArrayOf<Player>())
                     {
-                        return Player.Player1;
-                    }
-                    var p2Keepers = Board.GetPlayer1KeeperCards();
-                    if (p2Keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperForAtLeastOneFoodType) && p2Keepers.Exists(k => k.KeeperCardInfo.KeeperType.IsFood()))
-                    {
-                        return Player.Player2;
+                        var keepers = Board.GetPlayerKeeperCards(player);
+                        if (keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperForAtLeastOneFoodType) && keepers.Exists(k => k.KeeperCardInfo.KeeperType.IsFood()))
+                        {
+                            playersMatchingGoals.Add(player);
+                            break;
+                        }
                     }
                     break;
                 case GoalType.KeeperAndNotInPlay:
                     var keeperAndNotInPlay = goal.GoalType.GetKeeperAndNotInPlayToAcheiveGoal();
-                    var p1K = Board.GetPlayer1KeeperCards();
-                    var p2K = Board.GetPlayer2KeeperCards();
-                    if (p1K.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperNotInPlay) || p2K.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperNotInPlay))
+                    foreach (var player in EnumUtil.GetArrayOf<Player>())
                     {
-                        return null;
+                        var keepers = Board.GetPlayerKeeperCards(player);
+                        if (keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperNotInPlay)) {
+                            goto breakLoop;
+                        }
                     }
-                    if (p1K.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperInPlay))
+                    foreach (var player in EnumUtil.GetArrayOf<Player>())
                     {
-                        return Player.Player1;
+                        var keepers = Board.GetPlayerKeeperCards(player);
+                        if (keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperInPlay)) {
+                            playersMatchingGoals.Add(player);
+                            break;
+                        }
                     }
-                    if (p2K.Exists(k => k.KeeperCardInfo.KeeperType == keeperAndNotInPlay.KeeperInPlay))
-                    {
-                        return Player.Player2;
-                    }
-                    break;
+                    breakLoop: break;
             }
+        }
+        if (playersMatchingGoals.Count == 1)
+        {
+            return playersMatchingGoals.First();
         }
         return null;
     }

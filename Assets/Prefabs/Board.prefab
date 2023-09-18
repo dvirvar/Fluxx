@@ -85,15 +85,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bff26044f2a45842bf0a430ee8fa410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deck: {fileID: 3369760551598230372}
-  discardPile: {fileID: 2534479103946453977}
-  newRules: {fileID: 4058491871998908468}
-  currentGoal: {fileID: 6450646746726004114}
-  secondCurrentGoal: {fileID: 1813293840786641554}
-  player1Keepers: {fileID: 7390014052245757695}
-  player2Keepers: {fileID: 4159551338385609481}
-  player1Hand: {fileID: 5757522862556390141}
-  player2Hand: {fileID: 9045909119751635474}
+  deckTransform: {fileID: 3369760551598230372}
+  discardPileTransform: {fileID: 2534479103946453977}
+  newRulesTransform: {fileID: 4058491871998908468}
+  currentGoalTransform: {fileID: 6450646746726004114}
+  secondCurrentGoalTransform: {fileID: 1813293840786641554}
+  player1KeepersTransform: {fileID: 7390014052245757695}
+  player2KeepersTransform: {fileID: 4159551338385609481}
+  player1HandTransform: {fileID: 5757522862556390141}
+  player2HandTransform: {fileID: 9045909119751635474}
 --- !u!1 &902337599096654760
 GameObject:
   m_ObjectHideFlags: 0

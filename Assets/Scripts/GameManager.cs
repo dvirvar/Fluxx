@@ -50,16 +50,13 @@ public class GameManager : MonoBehaviour
         }
         deck.Shuffle();
         board.SetDeck(deck);
-        for (var i = 0; i < 6; ++i)
+        var players = EnumUtil.GetArrayOf<GameStateMachine.Player>();
+        var cardsPerPlayer = 3;
+        var totalCards = cardsPerPlayer * players.Length;
+        for (var i = 0; i < totalCards; ++i)
         {
             var card = board.DrawCard();
-            if (i < 3)
-            {
-                board.AddCardToPlayer1Hand(card);
-            } else
-            {
-                board.AddCardToPlayer2Hand(card);
-            }
+            board.AddHandCardTo(players[i / cardsPerPlayer], card);
         }
         gameStateMachine.Init(new StartOfTurnState(gameStateMachine, GameStateMachine.Player.Player1), board);
     }

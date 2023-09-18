@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class StartOfTurnState : State
 {
@@ -12,33 +10,19 @@ public class StartOfTurnState : State
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
         gameStateMachine.ResetDrawedAndPlayed();
-        var showPlayer1 = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1;
-        gameStateMachine.Board.ShowPlayer1Hand(showPlayer1);
-        gameStateMachine.Board.ShowPlayer2Hand(!showPlayer1);
-        DrawToMatchDraws(gameStateMachine);
-        gameStateMachine.SetState(new IdleState());
-        yield break;
-    }
-
-    void DrawToMatchDraws(GameStateMachine gameStateMachine)
-    {
-        for (; gameStateMachine.Drawed < gameStateMachine.currentDraws; gameStateMachine.DrawedCard())
+        foreach (var player in EnumUtil.GetArrayOf<GameStateMachine.Player>())
         {
-            var card = gameStateMachine.Board.DrawCard();
-            if (card == null)
-            {
-                continue;
-            }
-            card.SetCanBeSelected(true);
-            if (gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1)
-            {
-                gameStateMachine.Board.AddCardToPlayer1Hand(card);
-            }
-            else
-            {
-                gameStateMachine.Board.AddCardToPlayer2Hand(card);
-            }
+            gameStateMachine.Board.ShowPlayerHand(player, player == gameStateMachine.CurrentPlayer);
         }
+        gameStateMachine.DrawToMatchDraws();
+        if (gameStateMachine.IsFirstPlayRandom)
+        {
+            gameStateMachine.SetState(new FirstPlayRandomState());
+        } else
+        {
+            gameStateMachine.SetState(new IdleState());
+        }
+        yield break;
     }
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
@@ -46,7 +30,7 @@ public class StartOfTurnState : State
         yield break;
     }
 
-    public override IEnumerator Play(Card card)
+    public override IEnumerator Play(GameStateMachine gameStateMachine, Card card)
     {
         yield break;
     }

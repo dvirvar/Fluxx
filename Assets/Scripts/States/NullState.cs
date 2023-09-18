@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class NullState : State
 {
@@ -14,7 +12,7 @@ public class NullState : State
         yield break;
     }
 
-    public override IEnumerator Play(Card card)
+    public override IEnumerator Play(GameStateMachine gameStateMachine, Card card)
     {
         yield break;
     }

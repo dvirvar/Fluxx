@@ -54,14 +54,7 @@ public class Test : MonoBehaviour
             }
             else if (card is KeeperCard keeperCard)
             {
-                if (Random.Range(0, 2) == 1)
-                {
-                    board.AddKeeperToPlayer1(keeperCard);
-                }
-                else
-                {
-                    board.AddKeeperToPlayer2(keeperCard);
-                }
+                board.AddKeeperTo(EnumUtil.GetRandomOf<GameStateMachine.Player>(), keeperCard);
             } 
             else if (card is GoalCard goalCard)
             {
