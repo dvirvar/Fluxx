@@ -3,7 +3,13 @@ guid: 9c3578ebb3a262142a477233618f4ff1
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - cardMaterial: {instanceID: 0}
+  - canBeSelectedMaterial: {instanceID: 0}
+  - cardMeshRenderer: {instanceID: 0}
+  - nameText: {instanceID: 0}
+  - ruleTypeText: {instanceID: 0}
+  - descriptionText: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

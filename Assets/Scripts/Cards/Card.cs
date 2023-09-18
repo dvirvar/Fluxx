@@ -5,26 +5,24 @@ using UnityEngine;
 
 public abstract class Card : MonoBehaviour
 {
-    public enum Type
-    {
-        Action,
-        Goal,
-        Keeper,
-        NewRule
-    }
-
-
-    [SerializeField] TMP_Text typeText;
+    [SerializeField] Material cardMaterial, canBeSelectedMaterial;
+    [SerializeField] MeshRenderer cardMeshRenderer;
     [SerializeField] TMP_Text nameText;
 
-    public abstract Type type { get; }
-    protected CardInfo cardInfo;
+    public abstract CardType Type { get; }
+    protected CardInfo Info { get; private set; }
+    public bool CanBeSelected { get; private set; }
 
-    public void Init(CardInfo info)
+    protected void Init(CardInfo info)
     {
-        cardInfo = info;
-        typeText.text = type.ToString();
+        Info = info;
         nameText.text = info.Name;
+    }
+
+    public void SetCanBeSelected(bool canBeSelected)
+    {
+        CanBeSelected = canBeSelected;
+        cardMeshRenderer.material = canBeSelected ? canBeSelectedMaterial : cardMaterial;
     }
 }
 
@@ -36,4 +34,12 @@ public abstract class CardInfo
     {
         Name = name;
     }
+}
+
+public enum CardType
+{
+    Action,
+    Goal,
+    Keeper,
+    NewRule
 }

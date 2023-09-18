@@ -6,13 +6,13 @@ using UnityEngine;
 
 public class KeeperCard : Card
 {
-
-    public override Type type => Type.Keeper;
+    public override CardType Type => CardType.Keeper;
+    public KeeperCardInfo KeeperCardInfo => Info as KeeperCardInfo;
 
     public void Init(KeeperCardInfo info)
     {
         base.Init(info);
-    }    
+    }
 }
 
 public class KeeperCardInfo : CardInfo

@@ -8,7 +8,8 @@ public class GoalCard : Card
 {
 
     [SerializeField] TMP_Text descriptionText;
-    public override Type type => Type.Goal;
+    public override CardType Type => CardType.Goal;
+    public GoalCardInfo GoalCardInfo => Info as GoalCardInfo;
 
     public void Init(GoalCardInfo info)
     {

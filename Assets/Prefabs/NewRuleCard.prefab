@@ -25,12 +25,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1139427246925044319}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.002}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -2}
+  m_LocalScale: {x: 1.5384616, y: 1, z: 999.99994}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1047214164931145513}
+  m_Father: {fileID: 5652697362945234474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -196,12 +196,12 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4467394823968170219}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -0.002}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -2}
+  m_LocalScale: {x: 1.5384616, y: 1, z: 999.99994}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1047214164931145513}
+  m_Father: {fileID: 5652697362945234474}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -402,15 +402,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5824263564544895579, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
       propertyPath: m_Name
-      value: NewRuleCard Variant
+      value: NewRuleCard
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: 560590481706602249, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 5133408562987365898, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
       insertIndex: -1
       addedObject: {fileID: 779613537480303247}
-    - targetCorrespondingSourceObject: {fileID: 560590481706602249, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
+    - targetCorrespondingSourceObject: {fileID: 5133408562987365898, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1611724212582150727}
     m_AddedComponents:
@@ -418,9 +418,9 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 6432389428744248447}
   m_SourcePrefab: {fileID: 100100000, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
---- !u!4 &1047214164931145513 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 560590481706602249, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
+--- !u!23 &619124681624716807 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 132996035844187687, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
   m_PrefabInstance: {fileID: 671016204284731424}
   m_PrefabAsset: {fileID: 0}
 --- !u!114 &1061340597877033816 stripped
@@ -434,17 +434,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
---- !u!114 &4061574844599337362 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 3536013331480289714, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
+--- !u!4 &5652697362945234474 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5133408562987365898, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
   m_PrefabInstance: {fileID: 671016204284731424}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9541d86e2fd84c1d9990edf0852d74ab, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &6457068350670293627 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 5824263564544895579, guid: eb7d895ef26a10c45bb9871c907ffd29, type: 3}
@@ -462,7 +456,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c3578ebb3a262142a477233618f4ff1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  typeText: {fileID: 4061574844599337362}
+  cardMaterial: {fileID: 2100000, guid: b68f05088c9844e4fa843488ae3b95b2, type: 2}
+  canBeSelectedMaterial: {fileID: 2100000, guid: 7a750eeda73ded2469f338c45eb6f731, type: 2}
+  cardMeshRenderer: {fileID: 619124681624716807}
   nameText: {fileID: 1061340597877033816}
   ruleTypeText: {fileID: 948332406020288892}
   descriptionText: {fileID: 8594697585876788111}

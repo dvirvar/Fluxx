@@ -2,12 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Test : MonoBehaviour
+[RequireComponent(typeof(GameStateMachine))]
+public class GameManager : MonoBehaviour
 {
+    GameStateMachine gameStateMachine;
+    [SerializeField] InputManager inputManager;
     [SerializeField] Board board;
     [SerializeField] CardPrefabsSO cardPrefabInfoSO;
-    private void Start()
+
+    void Awake()
     {
+        gameStateMachine = GetComponent<GameStateMachine>();    
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        inputManager.OnCardClicked += PlayCard;
         var deck = new List<Card>();
         var actionCardPrefab = cardPrefabInfoSO.ActionCardPrefab;
         foreach (var item in DeckData.ActionCards)
@@ -39,46 +50,27 @@ public class Test : MonoBehaviour
         }
         deck.Shuffle();
         board.SetDeck(deck);
-        StartCoroutine(x());
-    }
-
-    IEnumerator x()
-    {
-        while (true)
+        for (var i = 0; i < 6; ++i)
         {
-            yield return new WaitForSeconds(0.1f);
             var card = board.DrawCard();
-            if (card is NewRuleCard newRuleCard)
+            if (i < 3)
             {
-                board.AddNewRule(newRuleCard);
-            }
-            else if (card is KeeperCard keeperCard)
+                board.AddCardToPlayer1Hand(card);
+            } else
             {
-                if (Random.Range(0, 2) == 1)
-                {
-                    board.AddKeeperToPlayer1(keeperCard);
-                }
-                else
-                {
-                    board.AddKeeperToPlayer2(keeperCard);
-                }
-            } 
-            else if (card is GoalCard goalCard)
-            {
-                if (Random.Range(0, 2) == 1)
-                {
-                    board.SetCurrentGoal(goalCard);
-                }
-                else
-                {
-                    board.SetSecondCurrentGoal(goalCard);
-                }
-            }
-            else
-            {
-                board.AddToDiscardPile(card);
+                board.AddCardToPlayer2Hand(card);
             }
         }
-        
+        gameStateMachine.Init(new StartOfTurnState(gameStateMachine, GameStateMachine.Player.Player1), board);
+    }
+
+    void OnDestroy()
+    {
+        inputManager.OnCardClicked -= PlayCard;
+    }
+
+    void PlayCard(Card card)
+    {
+        gameStateMachine.PlayCard(card);
     }
 }

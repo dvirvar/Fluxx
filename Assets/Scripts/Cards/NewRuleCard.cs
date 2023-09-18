@@ -8,7 +8,8 @@ public class NewRuleCard : Card
 {
     [SerializeField] TMP_Text ruleTypeText;
     [SerializeField] TMP_Text descriptionText;
-    public override Type type => Type.Keeper;
+    public override CardType Type => CardType.NewRule;
+    public NewRuleCardInfo NewRuleCardInfo => Info as NewRuleCardInfo;
 
     public void Init(NewRuleCardInfo info)
     {

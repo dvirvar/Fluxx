@@ -6,10 +6,10 @@ using UnityEngine;
 
 public class ActionCard : Card
 {
-
     [SerializeField] TMP_Text descriptionText;
-    public override Type type => Type.Action;
-
+    public override CardType Type => CardType.Action;
+    public ActionCardInfo ActionCardInfo => Info as ActionCardInfo;
+    
     public void Init(ActionCardInfo info)
     {
         base.Init(info);

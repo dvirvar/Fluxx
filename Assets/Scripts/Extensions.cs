@@ -2,12 +2,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public static class Extensions
 {
+
+    public static void Shuffle<T>(this List<T> list)
+    {
+        var random = new System.Random();
+        for (int i = 0; i < list.Count - 1; ++i)
+        {
+            int r = random.Next(i, list.Count);
+            (list[r], list[i]) = (list[i], list[r]);
+        }
+    }
 
     public static string GetName(this ActionCardType type) => type switch
     {
@@ -210,6 +220,33 @@ public static class Extensions
         return nameBuilder.ToString();
     }
 
+    public static bool IsFood(this KeeperCardType type) => type switch
+    {
+
+        KeeperCardType.TheMoon or
+        KeeperCardType.Music or
+        KeeperCardType.Time or
+        KeeperCardType.TheToaster or
+        KeeperCardType.TheBrain or
+        KeeperCardType.Dreams or
+        KeeperCardType.TheEye or
+        KeeperCardType.Sleep or
+        KeeperCardType.TheParty or
+        KeeperCardType.Peace or
+        KeeperCardType.Television or
+        KeeperCardType.TheSun or
+        KeeperCardType.Love or
+        KeeperCardType.Money or
+        KeeperCardType.TheRocket
+        => false,
+        KeeperCardType.Bread or
+        KeeperCardType.Chocolate or
+        KeeperCardType.Milk or
+        KeeperCardType.Cookies
+        => true,
+        _ => throw new NotImplementedException(),
+    };
+
     public static string GetName(this NewRuleCardType type) => type switch
     {
         NewRuleCardType.FirstPlayRandom => "First Play Random",
@@ -286,9 +323,22 @@ public static class Extensions
         _ => throw new NotImplementedException(),
     };
 
+    public static bool Actionable(this NewRuleCardType type) => type.GetRuleType() switch
+    {
+        RuleType.StartOfTurn or
+        RuleType.HandLimit or
+        RuleType.KeeperLimit or
+        RuleType.Draw or
+        RuleType.Play
+        => false,
+        RuleType.InstantEffect => type == NewRuleCardType.SwapPlaysForDraws,
+        RuleType.FreeAction => true,
+        _ => throw new NotImplementedException(),
+    };
+
     public static string GetDescription(this NewRuleCardType type) => type switch
     {
-        NewRuleCardType.FirstPlayRandom => "The first card you play must be chosen at random rom your hand by the player on your left, Ignore this rule if the current Rule cards allow you to play only one card.",
+        NewRuleCardType.FirstPlayRandom => "The first card you play must be chosen at random from your hand by the player on your left, Ignore this rule if the current Rule cards allow you to play only one card.",
         NewRuleCardType.GetOnWithIt => "Before your final play, if you are not empty handed, you may discard your entire hand and draw 3 cards. Your turn then ends immediately",
         NewRuleCardType.HandLimit0 => "If it isn't your turn, you can only have 0 cards in your hand. Discard extras immediately. During your turn, this rule does not apply to you; after your turn ends, discard down to 0 cards",
         NewRuleCardType.HandLimit1 => "If it isn't your turn, you can only have 1 card in your hand. Discard extras immediately. During your turn, this rule does not apply to you; after your turn ends, discard down to 1 card",
@@ -315,6 +365,20 @@ public static class Extensions
         NewRuleCardType.SwapPlaysForDraws => "During your turn, you may decide to play no more cards and instead draw as many cards as you have plays remaining. If Play All, draw as many cards as you hold.",
         NewRuleCardType.GoalMill => "Once during your turn, discard as many of your Goal cards as you choose then draw that many cards.",
         NewRuleCardType.MysteryPlay => "Once during your turn, you may take the top card from the draw pile and play it immediately.",
+        _ => throw new NotImplementedException(),
+    };
+
+    public static bool IsReplacingRule(this RuleType type) => type switch
+    {
+        RuleType.StartOfTurn or
+        RuleType.InstantEffect or
+        RuleType.FreeAction
+        => false,
+        RuleType.HandLimit or
+        RuleType.KeeperLimit or
+        RuleType.Draw or
+        RuleType.Play
+        => true,
         _ => throw new NotImplementedException(),
     };
 
