@@ -6,10 +6,13 @@ public class FirstPlayRandomState : State
     {
         if (gameStateMachine.CurrentPlays <= 1)
         {
-            gameStateMachine.SetState(new IdleState());
+            gameStateMachine.SetState(new StartOfTurnState());
             yield break;
         }
-        gameStateMachine.Board.ShowPlayerHand(gameStateMachine.CurrentPlayer, false);
+        foreach (var player in EnumUtil.GetArrayOf<GameStateMachine.Player>())
+        {
+            gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(player, false, player == gameStateMachine.CurrentPlayer);
+        }
         foreach (var rule in gameStateMachine.Board.GetNewRuleCards())
         {
             rule.SetCanBeSelected(false);
@@ -18,7 +21,7 @@ public class FirstPlayRandomState : State
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.Board.ShowPlayerHand(gameStateMachine.CurrentPlayer, true);
+        gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(gameStateMachine.CurrentPlayer, true, true);
         foreach (var rule in gameStateMachine.Board.GetNewRuleCards())
         {
             rule.SetCanBeSelected(rule.NewRuleCardInfo.NewRuleType.Actionable());
@@ -30,7 +33,7 @@ public class FirstPlayRandomState : State
     {
         if (gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Remove(card))
         {
-
+            gameStateMachine.SetState(new PlayHandCardState(card));
         }
         yield break;
     }

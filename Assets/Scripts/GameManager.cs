@@ -58,7 +58,7 @@ public class GameManager : MonoBehaviour
             var card = board.DrawCard();
             board.AddHandCardTo(players[i / cardsPerPlayer], card);
         }
-        gameStateMachine.Init(new StartOfTurnState(gameStateMachine, GameStateMachine.Player.Player1), board);
+        gameStateMachine.StartGame(board);
     }
 
     void OnDestroy()

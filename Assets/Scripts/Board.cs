@@ -186,17 +186,17 @@ public class Board : MonoBehaviour
         }
     }
 
-    public void ShowPlayerHand(GameStateMachine.Player player, bool show)
+    public void ShowAndCanBeSelectedPlayerHand(GameStateMachine.Player player, bool show, bool canBeSelected)
     {
-        ShowPlayerHand(show, GetPlayerHandCards(player));
+        ShowAndCanBeSelectedPlayerHand(show, canBeSelected, GetPlayerHandCards(player));
     }
 
-    void ShowPlayerHand(bool show, List<Card> handCards)
+    void ShowAndCanBeSelectedPlayerHand(bool show, bool canBeSelected, List<Card> handCards)
     {
         foreach (var card in handCards)
         {
             card.transform.localEulerAngles = new Vector3(0, show ? 0 : 180, 0);
-            card.SetCanBeSelected(show);
+            card.SetCanBeSelected(canBeSelected);
         }
     }
 

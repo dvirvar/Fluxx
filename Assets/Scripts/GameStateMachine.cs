@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.LowLevel;
 using System.Linq;
 
 public class GameStateMachine: MonoBehaviour
@@ -44,10 +43,11 @@ public class GameStateMachine: MonoBehaviour
     [HideInInspector] public bool Inflation = false;
     [HideInInspector] public bool IsFirstPlayRandom = false;
 
-    public void Init(State state, Board board)
+    public void StartGame(Board board)
     {
         Board = board;
-        SetState(state);
+        DrawToMatchDraws();
+        SetState(new StartOfTurnState());
     }
 
     public void SetState(State state)
@@ -156,6 +156,10 @@ public class GameStateMachine: MonoBehaviour
                     break;
                 case GoalType.NumberOfKeepersInPlay:
                     var numberOfKeepersToAchieveGoal = goal.GoalType.GetNumberOfKeepersToAcheiveGoal();
+                    if (Inflation)
+                    {
+                        ++numberOfKeepersToAchieveGoal;
+                    }
                     Player? winnerByKeepersCount()
                     {
                         int numberOfWinners = 0;
@@ -183,6 +187,10 @@ public class GameStateMachine: MonoBehaviour
                     break;
                 case GoalType.NumberOfCardsInHand:
                     var numberOfCardsInCardsToAchieveGoal = goal.GoalType.GetNumberOfCardsInHandAcheiveGoal();
+                    if (Inflation)
+                    {
+                        ++numberOfCardsInCardsToAchieveGoal;
+                    }
                     Player? winnerByCardsCountInHand()
                     {
                         int numberOfWinners = 0;
@@ -210,10 +218,11 @@ public class GameStateMachine: MonoBehaviour
                     break;
                 case GoalType.KeeperAndAtLeastOneFood:
                     var keeperForAtLeastOneFoodType = goal.GoalType.GetKeeperForAtLeastOneFoodToAcheiveGoal();
+                    var atLeast = Inflation ? 2 : 1;
                     foreach (var player in EnumUtil.GetArrayOf<Player>())
                     {
                         var keepers = Board.GetPlayerKeeperCards(player);
-                        if (keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperForAtLeastOneFoodType) && keepers.Exists(k => k.KeeperCardInfo.KeeperType.IsFood()))
+                        if (keepers.Exists(k => k.KeeperCardInfo.KeeperType == keeperForAtLeastOneFoodType) && keepers.Count(k => k.KeeperCardInfo.KeeperType.IsFood()) >= atLeast)
                         {
                             playersMatchingGoals.Add(player);
                             break;
