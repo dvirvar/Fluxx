@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,7 +5,9 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     GameStateMachine gameStateMachine;
+    [SerializeField] GameUI gameUI;
     [SerializeField] InputManager inputManager;
+    [SerializeField] new Camera camera;
     [SerializeField] Board board;
     [SerializeField] CardPrefabsSO cardPrefabInfoSO;
 
@@ -58,7 +59,7 @@ public class GameManager : MonoBehaviour
             var card = board.DrawCard();
             board.AddHandCardTo(players[i / cardsPerPlayer], card);
         }
-        gameStateMachine.StartGame(board);
+        gameStateMachine.StartGame(gameUI, inputManager, camera, board);
     }
 
     void OnDestroy()

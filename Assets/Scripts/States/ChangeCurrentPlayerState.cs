@@ -4,14 +4,9 @@ using UnityEngine;
 
 public class ChangeCurrentPlayerState : State
 {
-    public ChangeCurrentPlayerState(GameStateMachine gameStateMachine)
-    {
-        var player = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1 ? GameStateMachine.Player.Player2 : GameStateMachine.Player.Player1;
-        gameStateMachine.CurrentPlayer = player;
-    }
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.ResetDrawedAndPlayed();
+        gameStateMachine.AdvanceTurn();
         foreach(var rule in gameStateMachine.Board.GetNewRuleCards())
         {
             rule.SetCanBeSelected(rule.NewRuleCardInfo.NewRuleType.Actionable());

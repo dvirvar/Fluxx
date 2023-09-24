@@ -12,11 +12,30 @@ public class GameStateMachine: MonoBehaviour
         Player1,
         Player2,
     }
+    GameUI gameUI;
+    InputManager inputManager;
+    new Camera camera;
     public Board Board { get; private set; }
-    State state = State.NULL;
+    readonly List<State> states = new() { State.NULL };
+    int currentStateIndex = 0;
 
-    [HideInInspector] public Player CurrentPlayer = Player.Player1;
-    public int Played { get; private set; } = 0;
+    public Player CurrentPlayer {
+        get { return _currentPlayer; }
+        private set { 
+            _currentPlayer = value;
+            gameUI.SetCurrentPlayer(value == Player.Player1 ? "Player 1" : "Player 2");
+        }
+    }
+    Player _currentPlayer;
+
+    public int Played {
+        get { return _played; }
+        private set { 
+            _played = value;
+            gameUI.SetPlayed(value.ToString());
+        } 
+    }
+    int _played = 0;
     public int Drawed { get; private set; } = 0;
     
     public int CurrentPlays => CurrentPlayRule switch
@@ -26,7 +45,7 @@ public class GameStateMachine: MonoBehaviour
         NewRuleCardType.Play4 => Inflation ? 5 : 4,
         NewRuleCardType.PlayAllBut1 => Board.GetPlayerHandCards(CurrentPlayer).Count - (Inflation ? 2 : 1) + Played,
         NewRuleCardType.PlayAll => Board.GetPlayerHandCards(CurrentPlayer).Count + Played,
-        null => 1,
+        null => Inflation ? 2 : 1,
         _ => throw new NotImplementedException(),
     };
     public int CurrentDraws => CurrentDrawRule switch
@@ -43,11 +62,32 @@ public class GameStateMachine: MonoBehaviour
     [HideInInspector] public bool Inflation = false;
     [HideInInspector] public bool IsFirstPlayRandom = false;
 
-    public void StartGame(Board board)
+    public void StartGame(GameUI gameUI, InputManager inputManager, Camera camera, Board board)
     {
+        this.gameUI = gameUI;
+        this.inputManager = inputManager;
+        this.camera = camera;
         Board = board;
+        CurrentPlayer = Player.Player1;
         DrawToMatchDraws();
         SetState(new StartOfTurnState());
+    }
+
+    public void ResetAndSetState(State state)
+    {
+        StartCoroutine(ResetAndSetStateC(state));
+    }
+
+    public IEnumerator ResetAndSetStateC(State state)
+    {
+        for (; currentStateIndex >= 0; --currentStateIndex)
+        {
+            yield return states[currentStateIndex].OnExit(this);
+            states.RemoveAt(currentStateIndex);
+        }
+        currentStateIndex = 0;
+        states.Add(state);
+        yield return states[currentStateIndex].OnEnter(this);
     }
 
     public void SetState(State state)
@@ -57,14 +97,37 @@ public class GameStateMachine: MonoBehaviour
 
     IEnumerator SetStateC(State state)
     {
-        yield return this.state.OnExit(this);
-        this.state = state;
-        yield return this.state.OnEnter(this);
+        yield return states[currentStateIndex].OnExit(this);
+        states[currentStateIndex] = state;
+        yield return states[currentStateIndex].OnEnter(this);
+    }
+
+    public void PushState(State state)
+    {
+        StartCoroutine(PushStateC(state));
+    }
+
+    IEnumerator PushStateC(State state)
+    {
+        states.Add(state);
+        yield return states[++currentStateIndex].OnEnter(this);
+    }
+
+    public void PopState()
+    {
+        StartCoroutine(PopStateC());
+    }
+
+    public IEnumerator PopStateC()
+    {
+        yield return states[currentStateIndex].OnExit(this);
+        states.RemoveAt(currentStateIndex--);
+        yield return states[currentStateIndex].OnEnter(this);
     }
 
     public void PlayCard(Card card)
     {
-        StartCoroutine(state.Play(this, card));
+        StartCoroutine(states[currentStateIndex].Play(this, card));
     }
 
     public void DrawedCard()
@@ -77,10 +140,20 @@ public class GameStateMachine: MonoBehaviour
         ++Played;
     }
 
-    public void ResetDrawedAndPlayed()
+    public void AdvanceTurn()
     {
-        Played = 0;
+        CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+        ResetDrawedAndPlayed();
+        var lea = camera.transform.localEulerAngles;
+        camera.transform.localEulerAngles = new Vector3(lea.x, CurrentPlayer == Player.Player1 ? 0 : 180, lea.z);
+        inputManager.ReturnToCameraOrigin();
+        inputManager.SetInverse(CurrentPlayer == Player.Player2);
+    }
+
+    void ResetDrawedAndPlayed()
+    {
         Drawed = 0;
+        Played = 0;
     }
 
     public void DrawToMatchDraws()

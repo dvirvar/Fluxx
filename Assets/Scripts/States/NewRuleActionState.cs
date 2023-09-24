@@ -33,9 +33,10 @@ public class NewRuleActionState : State
                         gameStateMachine.Board.AddHandCardTo(gameStateMachine.CurrentPlayer, drawedCard);
                     }
                 }
-                gameStateMachine.SetState(new ChangeCurrentPlayerState(gameStateMachine));
+                gameStateMachine.ResetAndSetState(new ChangeCurrentPlayerState());
                 break;
             case NewRuleCardType.Recycling:
+                gameStateMachine.SetState(new RecyclingState());
                 break;
             case NewRuleCardType.SwapPlaysForDraws:
                 var cardsToDraw = gameStateMachine.CurrentPlays - gameStateMachine.Played;
@@ -47,9 +48,10 @@ public class NewRuleActionState : State
                         gameStateMachine.Board.AddHandCardTo(gameStateMachine.CurrentPlayer, drawedCard);
                     }
                 }
-                gameStateMachine.SetState(new ChangeCurrentPlayerState(gameStateMachine));
+                gameStateMachine.ResetAndSetState(new ChangeCurrentPlayerState());
                 break;
             case NewRuleCardType.GoalMill:
+                gameStateMachine.SetState(new GoalMillState());
                 break;
             case NewRuleCardType.MysteryPlay:
                 var cardToPlay = gameStateMachine.Board.DrawCard();

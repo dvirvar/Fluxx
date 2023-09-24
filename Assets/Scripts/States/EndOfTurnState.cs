@@ -6,7 +6,7 @@ public class EndOfTurnState : State
     {
         if (gameStateMachine.Played >= gameStateMachine.CurrentPlays || gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count == 0)
         {
-            gameStateMachine.SetState(new ChangeCurrentPlayerState(gameStateMachine));
+            gameStateMachine.SetState(new ChangeCurrentPlayerState());
         } else
         {
             gameStateMachine.SetState(new StartOfTurnState());

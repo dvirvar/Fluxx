@@ -1,12 +1,11 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class InputManager : MonoBehaviour
 {
     public event Action<Card> OnCardClicked = delegate { }; 
     [SerializeField] new Camera camera;
+    bool inverse;
     Vector3 cameraOrigin;
     private void Awake()
     {
@@ -20,6 +19,16 @@ public class InputManager : MonoBehaviour
         CheckClickPosition();
     }
 
+    public void SetInverse(bool inverse)
+    {
+        this.inverse = inverse;
+    }
+
+    public void ReturnToCameraOrigin()
+    {
+        camera.transform.position = cameraOrigin;
+    }
+
     void CameraMovement()
     {
         if (Input.GetKeyDown(KeyCode.R))
@@ -31,6 +40,12 @@ public class InputManager : MonoBehaviour
             var horizontal = Input.GetAxis("Horizontal");
             var vertical = Input.GetAxis("Vertical");
             var zoom = Input.GetAxis("Mouse ScrollWheel");
+            if (inverse)
+            {
+                horizontal = -horizontal;
+                vertical = -vertical;
+                zoom = -zoom;
+            }
             var deltaTime = Time.deltaTime;
             var cameraMovement = new Vector3(horizontal * deltaTime * 8, -zoom * deltaTime * 80, vertical * deltaTime * 8);
             if (cameraMovement != Vector3.zero)

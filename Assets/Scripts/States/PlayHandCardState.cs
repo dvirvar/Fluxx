@@ -4,7 +4,7 @@ using UnityEngine;
 public class PlayHandCardState : State
 {
     Card card;
-    bool freePlay = false;
+    readonly bool freePlay = false;
 
     public PlayHandCardState(Card card)
     {
@@ -56,6 +56,7 @@ public class PlayHandCardState : State
                 else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.Inflation)
                 {
                     gameStateMachine.Inflation = true;
+                    gameStateMachine.DrawToMatchDraws();
                 }
                 else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.FirstPlayRandom)
                 {

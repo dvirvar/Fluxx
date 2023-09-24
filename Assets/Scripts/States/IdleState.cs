@@ -1,7 +1,5 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class IdleState : State
 {
@@ -25,7 +23,7 @@ public class IdleState : State
         } else if (card is NewRuleCard newRule && gameStateMachine.Board.GetNewRuleCards().Contains(newRule))
         {
             //Card is in new rules on board
-            gameStateMachine.SetState(new NewRuleActionState(newRule));
+            gameStateMachine.PushState(new NewRuleActionState(newRule));
         }
         yield break;
     }
