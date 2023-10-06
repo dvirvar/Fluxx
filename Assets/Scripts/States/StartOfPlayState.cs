@@ -1,6 +1,6 @@
 using System.Collections;
 
-public class StartOfTurnState : State
+public class StartOfPlayState : State
 {
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
@@ -14,7 +14,7 @@ public class StartOfTurnState : State
             var isFinalPlay = gameStateMachine.CurrentPlays - gameStateMachine.Played == 1;
             getOnWithIt.SetCanBeSelected(isFinalPlay && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count > 0);
         }
-        gameStateMachine.SetState(new IdleState());
+        gameStateMachine.SetState(new PlayState());
         yield break;
     }
 

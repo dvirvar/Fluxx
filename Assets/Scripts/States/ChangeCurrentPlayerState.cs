@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class ChangeCurrentPlayerState : State
@@ -35,12 +34,18 @@ public class ChangeCurrentPlayerState : State
         }
         if (gameStateMachine.IsFirstPlayRandom)
         {
-            gameStateMachine.SetState(new FirstPlayRandomState());
+            gameStateMachine.PushState(new FirstPlayRandomState());
         }
         else
         {
-            gameStateMachine.SetState(new StartOfTurnState());
+            gameStateMachine.SetState(new StartOfPlayState());
         }
+        yield break;
+    }
+
+    public override IEnumerator OnResume(GameStateMachine gameStateMachine)
+    {
+        gameStateMachine.SetState(new StartOfPlayState());
         yield break;
     }
 

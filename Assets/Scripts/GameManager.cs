@@ -7,10 +7,15 @@ public class GameManager : MonoBehaviour
     GameStateMachine gameStateMachine;
     [SerializeField] GameUI gameUI;
     [SerializeField] InputManager inputManager;
+    [SerializeField] RockPaperScissorsManager rockPaperScissorsManager;
     [SerializeField] new Camera camera;
+    [SerializeField] Transform cardsHolder;
     [SerializeField] Board board;
     [SerializeField] CardPrefabsSO cardPrefabInfoSO;
-
+    //Helpers
+    [Header("Helpers")]
+    [SerializeField] NewRuleCardType[] firstNewRule;
+    [SerializeField] ActionCardType[] firstAction;
     void Awake()
     {
         gameStateMachine = GetComponent<GameStateMachine>();    
@@ -50,6 +55,20 @@ public class GameManager : MonoBehaviour
             deck.Add(card);
         }
         deck.Shuffle();
+        foreach(var type in firstNewRule)
+        {
+            var ind = deck.FindIndex(c => c is NewRuleCard ruleCard && ruleCard.NewRuleCardInfo.NewRuleType == type);
+            var c = deck[ind];
+            deck.RemoveAt(ind);
+            deck.Insert(deck.Count, c);
+        }
+        foreach (var type in firstAction)
+        {
+            var ind = deck.FindIndex(c => c is ActionCard actionCard && actionCard.ActionCardInfo.ActionType == type);
+            var c = deck[ind];
+            deck.RemoveAt(ind);
+            deck.Insert(deck.Count, c);
+        }
         board.SetDeck(deck);
         var players = EnumUtil.GetArrayOf<GameStateMachine.Player>();
         var cardsPerPlayer = 3;
@@ -59,7 +78,7 @@ public class GameManager : MonoBehaviour
             var card = board.DrawCard();
             board.AddHandCardTo(players[i / cardsPerPlayer], card);
         }
-        gameStateMachine.StartGame(gameUI, inputManager, camera, board);
+        gameStateMachine.StartGame(gameUI, inputManager, rockPaperScissorsManager, camera, cardsHolder, board);
     }
 
     void OnDestroy()

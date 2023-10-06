@@ -8,7 +8,8 @@ public class GoalMillState : State
     readonly List<NewRuleCard> rulesThatCouldBeSelected = new();
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
-        if (gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count(c=>c is GoalCard) == 0)
+        var handCards = gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer);
+        if (handCards.Count(c=>c is GoalCard) == 0)
         {
             gameStateMachine.PopState();
             yield break;
@@ -19,7 +20,6 @@ public class GoalMillState : State
             rule.SetCanBeSelected(false);
         }
         gameStateMachine.Board.GetNewRuleCards().First(r => r.NewRuleCardInfo.NewRuleType == NewRuleCardType.GoalMill).SetCanBeSelected(true);
-        var handCards = gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer);
         foreach (var card in handCards)
         {
             card.SetCanBeSelected(card is GoalCard);
@@ -29,19 +29,9 @@ public class GoalMillState : State
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        var handCards = gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer);
-        foreach (var card in handCards)
-        {
-            card.SetCanBeSelected(true);
-        }
         foreach (var rule in rulesThatCouldBeSelected)
         {
-            rule.SetCanBeSelected(rule);
-            if (rule.NewRuleCardInfo.NewRuleType == NewRuleCardType.GetOnWithIt)
-            {
-                var isFinalPlay = gameStateMachine.CurrentPlays - gameStateMachine.Played == 1;
-                rule.SetCanBeSelected(isFinalPlay && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count > 0);
-            }
+            rule.SetCanBeSelected(true);
         }
         goalCardsToDiscard.Clear();
         rulesThatCouldBeSelected.Clear();

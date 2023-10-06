@@ -6,7 +6,7 @@ public class FirstPlayRandomState : State
     {
         if (gameStateMachine.CurrentPlays <= 1)
         {
-            gameStateMachine.SetState(new StartOfTurnState());
+            gameStateMachine.SetState(new StartOfPlayState());
             yield break;
         }
         foreach (var player in EnumUtil.GetArrayOf<GameStateMachine.Player>())
@@ -33,7 +33,7 @@ public class FirstPlayRandomState : State
     {
         if (gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Remove(card))
         {
-            gameStateMachine.SetState(new PlayHandCardState(card));
+            gameStateMachine.SetState(new HandCardActionState(card));
         }
         yield break;
     }

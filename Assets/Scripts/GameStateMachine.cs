@@ -14,7 +14,9 @@ public class GameStateMachine: MonoBehaviour
     }
     GameUI gameUI;
     InputManager inputManager;
+    public RockPaperScissorsManager rockPaperScissorsManager { get; private set; }
     new Camera camera;
+    Transform cardsHolder;
     public Board Board { get; private set; }
     readonly List<State> states = new() { State.NULL };
     int currentStateIndex = 0;
@@ -61,16 +63,21 @@ public class GameStateMachine: MonoBehaviour
     public NewRuleCardType? CurrentDrawRule { get; private set; }
     [HideInInspector] public bool Inflation = false;
     [HideInInspector] public bool IsFirstPlayRandom = false;
+    [HideInInspector] public bool HasDoubleAgenda = false;
+    [HideInInspector] public bool TakeAnotherTurn = false;
+    bool isAnotherTurn = false;
 
-    public void StartGame(GameUI gameUI, InputManager inputManager, Camera camera, Board board)
+    public void StartGame(GameUI gameUI, InputManager inputManager, RockPaperScissorsManager rockPaperScissorsManager, Camera camera, Transform cardsHolder, Board board)
     {
         this.gameUI = gameUI;
         this.inputManager = inputManager;
+        this.rockPaperScissorsManager = rockPaperScissorsManager;
         this.camera = camera;
+        this.cardsHolder = cardsHolder;
         Board = board;
         CurrentPlayer = Player.Player1;
         DrawToMatchDraws();
-        SetState(new StartOfTurnState());
+        SetState(new StartOfPlayState());
     }
 
     public void ResetAndSetState(State state)
@@ -109,6 +116,7 @@ public class GameStateMachine: MonoBehaviour
 
     IEnumerator PushStateC(State state)
     {
+        yield return states[currentStateIndex].OnPause(this);
         states.Add(state);
         yield return states[++currentStateIndex].OnEnter(this);
     }
@@ -122,7 +130,7 @@ public class GameStateMachine: MonoBehaviour
     {
         yield return states[currentStateIndex].OnExit(this);
         states.RemoveAt(currentStateIndex--);
-        yield return states[currentStateIndex].OnEnter(this);
+        yield return states[currentStateIndex].OnResume(this);
     }
 
     public void PlayCard(Card card)
@@ -142,12 +150,29 @@ public class GameStateMachine: MonoBehaviour
 
     public void AdvanceTurn()
     {
-        CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+        if (TakeAnotherTurn && !isAnotherTurn)
+        {
+            TakeAnotherTurn = false;
+            isAnotherTurn = true;
+        } else
+        {
+            isAnotherTurn = false;
+            CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
+        }
         ResetDrawedAndPlayed();
         var lea = camera.transform.localEulerAngles;
         camera.transform.localEulerAngles = new Vector3(lea.x, CurrentPlayer == Player.Player1 ? 0 : 180, lea.z);
         inputManager.ReturnToCameraOrigin();
         inputManager.SetInverse(CurrentPlayer == Player.Player2);
+    }
+
+    public void LookAtDiscardPile(bool look)
+    {
+        inputManager.SetDiscardPileControl(look);
+        if (!look)
+        {
+            inputManager.ReturnToCameraOrigin();
+        }
     }
 
     void ResetDrawedAndPlayed()
@@ -174,7 +199,7 @@ public class GameStateMachine: MonoBehaviour
     {
         if (rule == null)
         {
-            CurrentPlayRule = rule;
+            CurrentPlayRule = null;
             return;
         }
         Assert.IsTrue(rule.Value.GetRuleType() == RuleType.Play);
@@ -185,11 +210,85 @@ public class GameStateMachine: MonoBehaviour
     {
         if (rule == null)
         {
-            CurrentDrawRule = rule;
+            CurrentDrawRule = null;
             return;
         }
         Assert.IsTrue(rule.Value.GetRuleType() == RuleType.Draw);
         CurrentDrawRule = rule;
+    }
+
+    public void DiscardNewRules(List<NewRuleCard> discardedRules)
+    {
+        var newRuleCards = Board.GetNewRuleCards();
+        foreach (var discardedRule in discardedRules)
+        {
+            if (newRuleCards.Remove(discardedRule))
+            {
+                discardedRule.SetCanBeSelected(false);
+                DiscardNewRule(discardedRule);
+            }
+        }
+        Board.RearrangeNewRules();
+    }
+
+    public void DiscardAllNewRules()
+    {
+        var newRuleCards = Board.GetNewRuleCards();
+        for (int i = newRuleCards.Count - 1; i >= 0; --i)
+        {
+            var card = newRuleCards[i];
+            card.SetCanBeSelected(false);
+            newRuleCards.RemoveAt(i);
+            DiscardNewRule(card);
+        }
+        Board.RearrangeNewRules();
+    }
+
+    public void RemoveNewRuleEffect(NewRuleCard ruleCard)
+    {
+        var ruleType = ruleCard.NewRuleCardInfo.NewRuleType.GetRuleType();
+        if (ruleType == RuleType.Draw)
+        {
+            SetCurrentDrawRule(null);
+        }
+        else if (ruleType == RuleType.Play)
+        {
+            SetCurrentPlayRule(null);
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.Inflation)
+        {
+            Inflation = false;
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.FirstPlayRandom)
+        {
+            IsFirstPlayRandom = false;
+        } else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
+        {
+            HasDoubleAgenda = false;
+        }
+    }
+
+    void DiscardNewRule(NewRuleCard ruleCard)
+    {
+        RemoveNewRuleEffect(ruleCard);
+        Board.AddToDiscardPile(ruleCard);
+    }
+
+    public void SetCardsInfrontOfCamera(List<Card> cards)
+    {
+        var space = 3;
+        var startOfCards = ((cards.Count - 1) * space) / -2f;
+        for (int i = 0; i < cards.Count; ++i)
+        {
+            var card = cards[i];
+            card.transform.SetParent(cardsHolder);
+            card.transform.SetLocalPositionAndRotation(new Vector3(i * space + startOfCards, 0), Quaternion.identity);
+        }
+    }
+
+    public void ShowCardsInfrontOfCamera(bool show)
+    {
+        cardsHolder.gameObject.SetActive(show);
     }
 
     public Player? CheckHasPlayerWon()

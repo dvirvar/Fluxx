@@ -1,6 +1,6 @@
 using System.Collections;
 
-public class EndOfTurnState : State
+public class EndOfPlayState : State
 {
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
@@ -9,7 +9,7 @@ public class EndOfTurnState : State
             gameStateMachine.SetState(new ChangeCurrentPlayerState());
         } else
         {
-            gameStateMachine.SetState(new StartOfTurnState());
+            gameStateMachine.SetState(new StartOfPlayState());
         }
         yield break;
     }

@@ -37,19 +37,9 @@ public class RecyclingState : State
         {
             keeper.SetCanBeSelected(false);
         }
-        var handCards = gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer);
-        foreach (var card in handCards)
-        {
-            card.SetCanBeSelected(true);
-        }
         foreach (var rule in rulesThatCouldBeSelected)
         {
-            rule.SetCanBeSelected(rule);
-            if (rule.NewRuleCardInfo.NewRuleType == NewRuleCardType.GetOnWithIt)
-            {
-                var isFinalPlay = gameStateMachine.CurrentPlays - gameStateMachine.Played == 1;
-                rule.SetCanBeSelected(isFinalPlay && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count > 0);
-            }
+            rule.SetCanBeSelected(true);
         }
         rulesThatCouldBeSelected.Clear();
         yield break;

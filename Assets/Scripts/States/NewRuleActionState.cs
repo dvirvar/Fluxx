@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine.Assertions;
 
@@ -39,7 +40,7 @@ public class NewRuleActionState : State
                 gameStateMachine.SetState(new RecyclingState());
                 break;
             case NewRuleCardType.SwapPlaysForDraws:
-                var cardsToDraw = gameStateMachine.CurrentPlays - gameStateMachine.Played;
+                var cardsToDraw = Math.Min(gameStateMachine.CurrentPlays - gameStateMachine.Played, gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count);
                 for (var i = 0; i < cardsToDraw; ++i)
                 {
                     var drawedCard = gameStateMachine.Board.DrawCard();
@@ -57,10 +58,10 @@ public class NewRuleActionState : State
                 var cardToPlay = gameStateMachine.Board.DrawCard();
                 if (cardToPlay != null)
                 {
-                    gameStateMachine.SetState(new PlayHandCardState(cardToPlay, true));
+                    gameStateMachine.SetState(new HandCardActionState(cardToPlay, true));
                 } else
                 {
-                    gameStateMachine.SetState(new StartOfTurnState());
+                    gameStateMachine.PopState();
                 }
                 break;
         }

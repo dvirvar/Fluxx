@@ -8,7 +8,7 @@ public class Board : MonoBehaviour
     [SerializeField] Transform deckTransform, discardPileTransform, newRulesTransform, currentGoalTransform, secondCurrentGoalTransform;
     [SerializeField] Transform player1KeepersTransform, player2KeepersTransform, player1HandTransform, player2HandTransform;
     Stack<Card> deckCards = new();
-    readonly Stack<Card> discardPileCards = new();
+    readonly List<Card> discardPileCards = new();
     readonly List<NewRuleCard> newRuleCards = new();
     GoalCard currentGoalCard, secondCurrentGoalCard;
     readonly List<KeeperCard> player1KeeperCards = new(), player2KeeperCards = new();
@@ -43,22 +43,33 @@ public class Board : MonoBehaviour
         {
             return null;
         }
-        var card = deckCards.Pop();
+        if (deckCards.TryPop(out var card))
+        {
+            return card;
+        }
         if (deckCards.Count == 0)
         {
-            var newDeck = discardPileCards.ToList();
-            newDeck.Shuffle();
-            SetDeck(newDeck);
+            discardPileCards.Shuffle();
+            SetDeck(discardPileCards);
             discardPileCards.Clear();
         }
-        return card;
+        return deckCards.Pop();
     }
 
     public void AddToDiscardPile(Card card)
     {
         card.transform.SetParent(discardPileTransform, false);
         card.transform.SetLocalPositionAndRotation(new Vector3(0, 0, discardPileCards.Count * -spaceBetweenDeckCards), Quaternion.identity);
-        discardPileCards.Push(card);
+        discardPileCards.Add(card);
+    }
+
+    public void RearrangeDiscardPile()
+    {
+        for (int i = 0; i < discardPileCards.Count; ++i)
+        {
+            var card = discardPileCards[i];
+            card.transform.SetLocalPositionAndRotation(new Vector3(0, 0, i * -spaceBetweenDeckCards), Quaternion.identity);
+        }
     }
 
     public void SetCurrentGoal(GoalCard card)
@@ -111,26 +122,11 @@ public class Board : MonoBehaviour
         newRuleCard.transform.SetLocalPositionAndRotation(new Vector3((newRuleCardIndex % newRuleCardsPerRow) * xSpaceBetweenRuleCards, (newRuleCardIndex / newRuleCardsPerRow) * -ySpaceBetweenRuleCards, 0), Quaternion.identity);
     }
 
-    public void DiscardNewRules(List<NewRuleCard> newRuleCards)
+    public void RearrangeNewRules()
     {
-        for (int i = this.newRuleCards.Count - 1; i >= 0; --i)
+        for (int i = 0; i < newRuleCards.Count; i++)
         {
-            var card = this.newRuleCards[i];
-            if (newRuleCards.Contains(card))
-            {
-                this.newRuleCards.RemoveAt(i);
-                AddToDiscardPile(card);
-            }
-        }
-    }
-
-    public void DiscardAllNewRules()
-    {
-        for (int i = newRuleCards.Count - 1; i >= 0; --i)
-        {
-            var card = newRuleCards[i];
-            newRuleCards.RemoveAt(i);
-            AddToDiscardPile(card);
+            newRuleCards[i].transform.SetLocalPositionAndRotation(new Vector3((i % newRuleCardsPerRow) * xSpaceBetweenRuleCards, (i / newRuleCardsPerRow) * -ySpaceBetweenRuleCards, 0), Quaternion.identity);
         }
     }
 
@@ -151,6 +147,20 @@ public class Board : MonoBehaviour
         keeperCard.transform.SetParent(keepers, false);
         keeperCard.transform.SetLocalPositionAndRotation(new Vector3(keeperCards.Count * xSpaceBetweenKeepers, 0), Quaternion.identity);
         keeperCards.Add(keeperCard);
+    }
+
+    public void RearrangePlayerKeepers(GameStateMachine.Player player)
+    {
+        RearrangePlayerKeepers(GetPlayerKeeperCards(player));
+    }
+
+    void RearrangePlayerKeepers(List<KeeperCard> keeperCards)
+    {
+        for (int i = 0; i < keeperCards.Count; ++i)
+        {
+            var card = keeperCards[i];
+            card.transform.localPosition = new Vector3(i * xSpaceBetweenKeepers, 0);
+        }
     }
 
     public void AddHandCardTo(GameStateMachine.Player player, Card card)
@@ -200,6 +210,9 @@ public class Board : MonoBehaviour
         }
     }
 
+    public Stack<Card> GetDeckCards() => deckCards;
+    public List<Card> GetDiscardPileCards() => discardPileCards;
+    public Vector3 GetDiscardPilePosition() => discardPileTransform.position;
     public List<NewRuleCard> GetNewRuleCards() => newRuleCards;
     public GoalCard GetCurrentGoalCard() => currentGoalCard;
     public GoalCard GetSecondCurrentGoalCard() => secondCurrentGoalCard;
