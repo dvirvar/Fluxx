@@ -10,7 +10,7 @@ public class ChangeCurrentPlayerState : State
         {
             rule.SetCanBeSelected(rule.NewRuleCardInfo.NewRuleType.Actionable());
         }
-        if (gameStateMachine.Board.GetNewRuleCards().Exists(r=>r.NewRuleCardInfo.NewRuleType == NewRuleCardType.NoHandBonus) && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count == 0)
+        if (gameStateMachine.NoHandBonus && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count == 0)
         {
             var draws = gameStateMachine.Inflation ? 4 : 3;
             for (int i = 0; i < draws; ++i)

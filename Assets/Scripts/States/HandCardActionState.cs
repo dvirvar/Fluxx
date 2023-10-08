@@ -135,9 +135,26 @@ public class HandCardActionState : State
                 else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.FirstPlayRandom)
                 {
                     gameStateMachine.IsFirstPlayRandom = true;
-                } else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
+                }
+                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
                 {
                     gameStateMachine.HasDoubleAgenda = true;
+                }
+                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.NoHandBonus)
+                {
+                    gameStateMachine.NoHandBonus = true;
+                }
+                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.RichBonus)
+                {
+                    gameStateMachine.RichBonus = true;
+                }
+                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PartyBonus)
+                {
+                    gameStateMachine.PartyBonus = true;
+                }
+                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PoorBonus)
+                {
+                    gameStateMachine.PoorBonus = true;
                 }
                 newRuleCard.SetCanBeSelected(newRuleCard.NewRuleCardInfo.NewRuleType.Actionable());
                 break;

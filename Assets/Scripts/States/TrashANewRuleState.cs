@@ -46,8 +46,14 @@ public class TrashANewRuleState : State
         if (card is NewRuleCard newRuleCard)
         {
             rulesThatCouldNotBeSelected.Remove(newRuleCard);
-            gameStateMachine.DiscardNewRules(new() { newRuleCard });
-            gameStateMachine.PopState();
+            var state = gameStateMachine.DiscardNewRules(new() { newRuleCard });
+            if (state != null)
+            {
+                gameStateMachine.SetState(state);
+            } else
+            {
+                gameStateMachine.PopState();
+            }
         }
         yield break;
     }

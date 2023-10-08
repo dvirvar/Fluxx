@@ -4,8 +4,14 @@ public class RulesResetState : State
 {
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.DiscardAllNewRules();
-        gameStateMachine.PopState();
+        var state = gameStateMachine.DiscardAllNewRules();
+        if (state != null)
+        {
+            gameStateMachine.SetState(state);
+        } else
+        {
+            gameStateMachine.PopState();
+        }
         yield break;
     }
 

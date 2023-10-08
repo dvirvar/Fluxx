@@ -1,6 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 
 public class RockPaperScissorsShowdownState : State
 {
@@ -11,8 +9,8 @@ public class RockPaperScissorsShowdownState : State
         gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(gameStateMachine.CurrentPlayer, false, false);
         var player = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1 ? "Player 1" : "Player 2";
         var otherPlayer = gameStateMachine.CurrentPlayer != GameStateMachine.Player.Player1 ? "Player 1" : "Player 2";
-        gameStateMachine.rockPaperScissorsManager.StartGame(player, otherPlayer, gameStateMachine.Inflation ? 4 : 3);
-        gameStateMachine.rockPaperScissorsManager.PlayerHasWon += RockPaperScissorsManager_PlayerHasWon;
+        gameStateMachine.RockPaperScissorsManager.StartGame(player, otherPlayer, gameStateMachine.Inflation ? 4 : 3);
+        gameStateMachine.RockPaperScissorsManager.PlayerHasWon += RockPaperScissorsManager_PlayerHasWon;
         yield break;
     }
 
@@ -32,8 +30,8 @@ public class RockPaperScissorsShowdownState : State
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.rockPaperScissorsManager.PlayerHasWon -= RockPaperScissorsManager_PlayerHasWon;
-        gameStateMachine = null;
+        gameStateMachine.RockPaperScissorsManager.PlayerHasWon -= RockPaperScissorsManager_PlayerHasWon;
+        this.gameStateMachine = null;
         yield break;
     }
 

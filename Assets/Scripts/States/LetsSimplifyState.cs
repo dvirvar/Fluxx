@@ -78,7 +78,13 @@ public class LetsSimplifyState : State
 
     void DiscardRulesAndPopState(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.DiscardNewRules(rulesToDiscard);
-        gameStateMachine.PopState();
+        var state = gameStateMachine.DiscardNewRules(rulesToDiscard);
+        if (state != null)
+        {
+            gameStateMachine.SetState(state);
+        } else
+        {
+            gameStateMachine.PopState();
+        }
     }
 }

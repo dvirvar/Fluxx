@@ -14,7 +14,8 @@ public class GameStateMachine: MonoBehaviour
     }
     GameUI gameUI;
     InputManager inputManager;
-    public RockPaperScissorsManager rockPaperScissorsManager { get; private set; }
+    public RockPaperScissorsManager RockPaperScissorsManager { get; private set; }
+    public DoubleAgendaManager DoubleAgendaManager { get; private set; }
     new Camera camera;
     Transform cardsHolder;
     public Board Board { get; private set; }
@@ -40,38 +41,107 @@ public class GameStateMachine: MonoBehaviour
     int _played = 0;
     public int Drawed { get; private set; } = 0;
     
-    public int CurrentPlays => CurrentPlayRule switch
+    public int CurrentPlays
     {
-        NewRuleCardType.Play2 => Inflation ? 3 : 2,
-        NewRuleCardType.Play3 => Inflation ? 4 : 3,
-        NewRuleCardType.Play4 => Inflation ? 5 : 4,
-        NewRuleCardType.PlayAllBut1 => Board.GetPlayerHandCards(CurrentPlayer).Count - (Inflation ? 2 : 1) + Played,
-        NewRuleCardType.PlayAll => Board.GetPlayerHandCards(CurrentPlayer).Count + Played,
-        null => Inflation ? 2 : 1,
-        _ => throw new NotImplementedException(),
-    };
-    public int CurrentDraws => CurrentDrawRule switch
+        get
+        {
+            var plays = CurrentPlayRule switch
+            {
+                NewRuleCardType.Play2 => Inflation ? 3 : 2,
+                NewRuleCardType.Play3 => Inflation ? 4 : 3,
+                NewRuleCardType.Play4 => Inflation ? 5 : 4,
+                NewRuleCardType.PlayAllBut1 => Board.GetPlayerHandCards(CurrentPlayer).Count - (Inflation ? 2 : 1) + Played,
+                NewRuleCardType.PlayAll => Board.GetPlayerHandCards(CurrentPlayer).Count + Played,
+                null => Inflation ? 2 : 1,
+                _ => throw new NotImplementedException(),
+            };
+            if (PartyBonus)
+            {
+                foreach (var player in EnumUtil.GetArrayOf<Player>())
+                {
+                    if (Board.GetPlayerKeeperCards(player).Exists(k => k.KeeperCardInfo.KeeperType == KeeperCardType.TheParty))
+                    {
+                        plays += Inflation ? 2 : 1;
+                        break;
+                    }
+                }
+            }
+            if (RichBonus)
+            {
+                var keepersCount = new List<int>();
+                var players = EnumUtil.GetArrayOf<Player>();
+                foreach (var player in players)
+                {
+                    keepersCount.Add(Board.GetPlayerKeeperCards(player).Count);
+                }
+                var maxKeepers = keepersCount.Max();
+                if (keepersCount.Count(c=> c == maxKeepers) == 1 && players[keepersCount.IndexOf(maxKeepers)] == CurrentPlayer)
+                {
+                    plays += Inflation ? 2 : 1;
+                }
+            }
+            return plays;
+        }
+    }
+    public int CurrentDraws
     {
-        NewRuleCardType.Draw2 => Inflation ? 3 : 2,
-        NewRuleCardType.Draw3 => Inflation ? 4 : 3,
-        NewRuleCardType.Draw4 => Inflation ? 5 : 4,
-        NewRuleCardType.Draw5 => Inflation ? 6 : 5,
-        null => Inflation ? 2 : 1,
-        _ => throw new NotImplementedException(),
-    };
+        get
+        {
+            var draws = CurrentDrawRule switch
+            {
+                NewRuleCardType.Draw2 => Inflation ? 3 : 2,
+                NewRuleCardType.Draw3 => Inflation ? 4 : 3,
+                NewRuleCardType.Draw4 => Inflation ? 5 : 4,
+                NewRuleCardType.Draw5 => Inflation ? 6 : 5,
+                null => Inflation ? 2 : 1,
+                _ => throw new NotImplementedException(),
+            };
+            if (PartyBonus)
+            {
+                foreach (var player in EnumUtil.GetArrayOf<Player>())
+                {
+                    if (Board.GetPlayerKeeperCards(player).Exists(k => k.KeeperCardInfo.KeeperType == KeeperCardType.TheParty))
+                    {
+                        draws += Inflation ? 2 : 1;
+                        break;
+                    }
+                }
+            }
+            if (PoorBonus)
+            {
+                var keepersCount = new List<int>();
+                var players = EnumUtil.GetArrayOf<Player>();
+                foreach (var player in players)
+                {
+                    keepersCount.Add(Board.GetPlayerKeeperCards(player).Count);
+                }
+                var minKeepers = keepersCount.Min();
+                if (keepersCount.Count(c => c == minKeepers) == 1 && players[keepersCount.IndexOf(minKeepers)] == CurrentPlayer)
+                {
+                    draws += Inflation ? 2 : 1;
+                }
+            }
+            return draws;
+        }
+    }
     public NewRuleCardType? CurrentPlayRule { get; private set; }
     public NewRuleCardType? CurrentDrawRule { get; private set; }
     [HideInInspector] public bool Inflation = false;
     [HideInInspector] public bool IsFirstPlayRandom = false;
     [HideInInspector] public bool HasDoubleAgenda = false;
     [HideInInspector] public bool TakeAnotherTurn = false;
+    [HideInInspector] public bool NoHandBonus = false;
+    [HideInInspector] public bool PartyBonus = false;
+    [HideInInspector] public bool RichBonus = false;
+    [HideInInspector] public bool PoorBonus = false;
     bool isAnotherTurn = false;
 
-    public void StartGame(GameUI gameUI, InputManager inputManager, RockPaperScissorsManager rockPaperScissorsManager, Camera camera, Transform cardsHolder, Board board)
+    public void StartGame(GameUI gameUI, InputManager inputManager, RockPaperScissorsManager rockPaperScissorsManager, DoubleAgendaManager doubleAgendaManager, Camera camera, Transform cardsHolder, Board board)
     {
         this.gameUI = gameUI;
         this.inputManager = inputManager;
-        this.rockPaperScissorsManager = rockPaperScissorsManager;
+        RockPaperScissorsManager = rockPaperScissorsManager;
+        DoubleAgendaManager = doubleAgendaManager;
         this.camera = camera;
         this.cardsHolder = cardsHolder;
         Board = board;
@@ -217,34 +287,46 @@ public class GameStateMachine: MonoBehaviour
         CurrentDrawRule = rule;
     }
 
-    public void DiscardNewRules(List<NewRuleCard> discardedRules)
+    public State DiscardNewRules(List<NewRuleCard> discardedRules)
     {
+        State state = null;
         var newRuleCards = Board.GetNewRuleCards();
         foreach (var discardedRule in discardedRules)
         {
             if (newRuleCards.Remove(discardedRule))
             {
                 discardedRule.SetCanBeSelected(false);
-                DiscardNewRule(discardedRule);
+                var discardedRuleState = DiscardNewRule(discardedRule);
+                if (discardedRuleState != null)
+                {
+                    state = discardedRuleState;
+                }
             }
         }
         Board.RearrangeNewRules();
+        return state;
     }
 
-    public void DiscardAllNewRules()
+    public State DiscardAllNewRules()
     {
+        State state = null;
         var newRuleCards = Board.GetNewRuleCards();
         for (int i = newRuleCards.Count - 1; i >= 0; --i)
         {
             var card = newRuleCards[i];
             card.SetCanBeSelected(false);
             newRuleCards.RemoveAt(i);
-            DiscardNewRule(card);
+            var discardedRuleState = DiscardNewRule(card);
+            if (discardedRuleState != null)
+            {
+                state = discardedRuleState;
+            }
         }
         Board.RearrangeNewRules();
+        return state;
     }
 
-    public void RemoveNewRuleEffect(NewRuleCard ruleCard)
+    public State RemoveNewRuleEffect(NewRuleCard ruleCard)
     {
         var ruleType = ruleCard.NewRuleCardInfo.NewRuleType.GetRuleType();
         if (ruleType == RuleType.Draw)
@@ -262,16 +344,36 @@ public class GameStateMachine: MonoBehaviour
         else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.FirstPlayRandom)
         {
             IsFirstPlayRandom = false;
-        } else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
         {
             HasDoubleAgenda = false;
+            return new RemoveDoubleAgendaState();
         }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.NoHandBonus)
+        {
+            NoHandBonus = false;
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.RichBonus)
+        {
+            RichBonus = false;
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PartyBonus)
+        {
+            PartyBonus = false;
+        }
+        else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PoorBonus)
+        {
+            PoorBonus = false;
+        }
+        return null;
     }
 
-    void DiscardNewRule(NewRuleCard ruleCard)
+    State DiscardNewRule(NewRuleCard ruleCard)
     {
-        RemoveNewRuleEffect(ruleCard);
+        var state = RemoveNewRuleEffect(ruleCard);
         Board.AddToDiscardPile(ruleCard);
+        return state;
     }
 
     public void SetCardsInfrontOfCamera(List<Card> cards)

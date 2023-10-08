@@ -4,6 +4,7 @@ public class EndOfPlayState : State
 {
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
+        gameStateMachine.DrawToMatchDraws();
         if (gameStateMachine.Played >= gameStateMachine.CurrentPlays || gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count == 0)
         {
             gameStateMachine.SetState(new ChangeCurrentPlayerState());

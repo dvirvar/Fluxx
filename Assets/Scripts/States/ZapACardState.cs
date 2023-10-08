@@ -71,10 +71,16 @@ public class ZapACardState : State
             if (gameStateMachine.Board.GetNewRuleCards().Remove(ruleCard))
             {
                 rulesThatCouldNotBeSelected.Remove(ruleCard);
-                gameStateMachine.RemoveNewRuleEffect(ruleCard);
+                var state = gameStateMachine.RemoveNewRuleEffect(ruleCard);
                 gameStateMachine.Board.RearrangeNewRules();
                 gameStateMachine.Board.AddHandCardTo(gameStateMachine.CurrentPlayer, ruleCard);
-                gameStateMachine.PopState();
+                if (state == null)
+                {
+                    gameStateMachine.PopState();
+                } else
+                {
+                    gameStateMachine.SetState(state);
+                }
                 yield break;
             }
         }

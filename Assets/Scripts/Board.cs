@@ -82,6 +82,13 @@ public class Board : MonoBehaviour
         SetGoalTo(ref secondCurrentGoalCard, secondCurrentGoalTransform, card);
     }
 
+    public GoalCard RemoveSecondCurrentGoal()
+    {
+        var goalCard = secondCurrentGoalCard;
+        secondCurrentGoalCard = null;
+        return goalCard;
+    }
+
     private void SetGoalTo(ref GoalCard currentGoalCard, Transform goal, GoalCard goalCard)
     {
         if (currentGoalCard != null)
