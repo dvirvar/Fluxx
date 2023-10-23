@@ -4,11 +4,6 @@ public class FirstPlayRandomState : State
 {
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
-        if (gameStateMachine.CurrentPlays <= 1)
-        {
-            gameStateMachine.SetState(new StartOfPlayState());
-            yield break;
-        }
         foreach (var player in EnumUtil.GetArrayOf<GameStateMachine.Player>())
         {
             gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(player, false, player == gameStateMachine.CurrentPlayer);
@@ -17,6 +12,7 @@ public class FirstPlayRandomState : State
         {
             rule.SetCanBeSelected(false);
         }
+        yield break;
     }
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)

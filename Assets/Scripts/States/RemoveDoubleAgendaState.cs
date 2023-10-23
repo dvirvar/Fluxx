@@ -18,7 +18,15 @@ public class RemoveDoubleAgendaState : State
                 yield break;
             }
             gameStateMachine.Board.SetCurrentGoal(gameStateMachine.Board.RemoveSecondCurrentGoal());
-            gameStateMachine.PopState();
+            var state = gameStateMachine.CheckHasPlayerWon();
+            if (state != null)
+            {
+                gameStateMachine.ResetAndSetState(state);
+            }
+            else
+            {
+                gameStateMachine.PopState();
+            }
             yield break;
         }
         else if (secondCurrentGoalCard == null)
@@ -26,8 +34,8 @@ public class RemoveDoubleAgendaState : State
             gameStateMachine.PopState();
             yield break;
         }
-        gameStateMachine.DoubleAgendaManager.RemoveDoubleAgenda(currentGoalCard.GoalCardInfo.Name, secondCurrentGoalCard.GoalCardInfo.Name);
-        gameStateMachine.DoubleAgendaManager.ButtonPressed += DoubleAgendaManager_ButtonPressed;
+        gameStateMachine.GameUI.DoubleAgendaManager.RemoveDoubleAgenda(currentGoalCard.GoalCardInfo.Name, secondCurrentGoalCard.GoalCardInfo.Name);
+        gameStateMachine.GameUI.DoubleAgendaManager.ButtonPressed += DoubleAgendaManager_ButtonPressed;
         yield break;
     }
 
@@ -41,12 +49,20 @@ public class RemoveDoubleAgendaState : State
         {
             gameStateMachine.Board.AddToDiscardPile(secondGoalcard);
         }
-        gameStateMachine.PopState();
+        var state = gameStateMachine.CheckHasPlayerWon();
+        if (state != null)
+        {
+            gameStateMachine.ResetAndSetState(state);
+        }
+        else
+        {
+            gameStateMachine.PopState();
+        }
     }
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.DoubleAgendaManager.ButtonPressed -= DoubleAgendaManager_ButtonPressed;
+        gameStateMachine.GameUI.DoubleAgendaManager.ButtonPressed -= DoubleAgendaManager_ButtonPressed;
         this.gameStateMachine = null;
         yield break;
     }

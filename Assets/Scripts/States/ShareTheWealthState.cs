@@ -25,7 +25,15 @@ public class ShareTheWealthState : State
             gameStateMachine.Board.AddKeeperTo(allPlayers[currentPlayerIndex], keepers[i]);
             currentPlayerIndex = (currentPlayerIndex + 1) % allPlayers.Length;
         }
-        gameStateMachine.PopState();
+        var state = gameStateMachine.CheckHasPlayerWon();
+        if (state != null)
+        {
+            gameStateMachine.ResetAndSetState(state);
+        }
+        else
+        {
+            gameStateMachine.PopState();
+        }
         yield break;
     }
 

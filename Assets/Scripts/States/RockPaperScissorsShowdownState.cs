@@ -9,8 +9,8 @@ public class RockPaperScissorsShowdownState : State
         gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(gameStateMachine.CurrentPlayer, false, false);
         var player = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1 ? "Player 1" : "Player 2";
         var otherPlayer = gameStateMachine.CurrentPlayer != GameStateMachine.Player.Player1 ? "Player 1" : "Player 2";
-        gameStateMachine.RockPaperScissorsManager.StartGame(player, otherPlayer, gameStateMachine.Inflation ? 4 : 3);
-        gameStateMachine.RockPaperScissorsManager.PlayerHasWon += RockPaperScissorsManager_PlayerHasWon;
+        gameStateMachine.GameUI.RockPaperScissorsManager.StartGame(player, otherPlayer, gameStateMachine.Inflation ? 4 : 3);
+        gameStateMachine.GameUI.RockPaperScissorsManager.PlayerHasWon += RockPaperScissorsManager_PlayerHasWon;
         yield break;
     }
 
@@ -30,7 +30,7 @@ public class RockPaperScissorsShowdownState : State
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.RockPaperScissorsManager.PlayerHasWon -= RockPaperScissorsManager_PlayerHasWon;
+        gameStateMachine.GameUI.RockPaperScissorsManager.PlayerHasWon -= RockPaperScissorsManager_PlayerHasWon;
         this.gameStateMachine = null;
         yield break;
     }

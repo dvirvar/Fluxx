@@ -7,8 +7,6 @@ public class GameManager : MonoBehaviour
     GameStateMachine gameStateMachine;
     [SerializeField] GameUI gameUI;
     [SerializeField] InputManager inputManager;
-    [SerializeField] RockPaperScissorsManager rockPaperScissorsManager;
-    [SerializeField] DoubleAgendaManager doubleAgendaManager;
     [SerializeField] new Camera camera;
     [SerializeField] Transform cardsHolder;
     [SerializeField] Board board;
@@ -79,7 +77,7 @@ public class GameManager : MonoBehaviour
             var card = board.DrawCard();
             board.AddHandCardTo(players[i / cardsPerPlayer], card);
         }
-        gameStateMachine.StartGame(gameUI, inputManager, rockPaperScissorsManager, doubleAgendaManager, camera, cardsHolder, board);
+        gameStateMachine.StartGame(gameUI, inputManager, camera, cardsHolder, board);
     }
 
     void OnDestroy()

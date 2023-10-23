@@ -17,6 +17,7 @@ public class LetsDoThatAgainState : State
         {
             card.SetCanBeSelected(true);
         }
+        gameStateMachine.GameUI.LetsDoThatAgainUI.SetActive(true);
         gameStateMachine.LookAtDiscardPile(true);
         yield break;
     }
@@ -28,6 +29,7 @@ public class LetsDoThatAgainState : State
             card.SetCanBeSelected(false);
         }
         usableCards.Clear();
+        gameStateMachine.GameUI.LetsDoThatAgainUI.SetActive(false);
         gameStateMachine.LookAtDiscardPile(false);
         yield break;
     }

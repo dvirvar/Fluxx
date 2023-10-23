@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 
 public class GoalCardActionState : State
 {
@@ -17,11 +16,14 @@ public class GoalCardActionState : State
         if (!gameStateMachine.HasDoubleAgenda)
         {
             gameStateMachine.Board.SetCurrentGoal(card);
-            if (gameStateMachine.CheckHasPlayerWon() != null)
+            var state = gameStateMachine.CheckHasPlayerWon();
+            if (state != null)
             {
-                Debug.Log($"{gameStateMachine.CheckHasPlayerWon()} has won");
+                gameStateMachine.ResetAndSetState(state);
+            } else
+            {
+                gameStateMachine.PopState();
             }
-            gameStateMachine.PopState();
             yield break;
         }
         var currentGoalCard = gameStateMachine.Board.GetCurrentGoalCard();
@@ -45,8 +47,8 @@ public class GoalCardActionState : State
         gameStateMachine.SetCardsInfrontOfCamera(new List<Card> { card });
         gameStateMachine.ShowCardsInfrontOfCamera(true);
         gameStateMachine.Board.ShowAndCanBeSelectedPlayerHand(gameStateMachine.CurrentPlayer, true, false);
-        gameStateMachine.DoubleAgendaManager.ChooseDoubleAgenda(firstName, secondName);
-        gameStateMachine.DoubleAgendaManager.ButtonPressed += DoubleAgendaManager_ButtonPressed;
+        gameStateMachine.GameUI.DoubleAgendaManager.ChooseDoubleAgenda(firstName, secondName);
+        gameStateMachine.GameUI.DoubleAgendaManager.ButtonPressed += DoubleAgendaManager_ButtonPressed;
         yield break;
     }
 
@@ -59,16 +61,19 @@ public class GoalCardActionState : State
         {
             gameStateMachine.Board.SetCurrentGoal(card);
         }
-        if (gameStateMachine.CheckHasPlayerWon() != null)
+        var state = gameStateMachine.CheckHasPlayerWon();
+        if (state != null)
         {
-            Debug.Log($"{gameStateMachine.CheckHasPlayerWon()} has won");
+            gameStateMachine.ResetAndSetState(state);
+        } else
+        {
+            gameStateMachine.PopState();
         }
-        gameStateMachine.PopState();
     }
 
     public override IEnumerator OnExit(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.DoubleAgendaManager.ButtonPressed -= DoubleAgendaManager_ButtonPressed;
+        gameStateMachine.GameUI.DoubleAgendaManager.ButtonPressed -= DoubleAgendaManager_ButtonPressed;
         card = null;
         this.gameStateMachine = null;
         yield break;

@@ -52,7 +52,14 @@ public class StealAKeeperState : State
             card.SetCanBeSelected(false);
             gameStateMachine.Board.RearrangePlayerKeepers(otherPlayer);
             gameStateMachine.Board.AddKeeperTo(gameStateMachine.CurrentPlayer, keeperCard);
-            gameStateMachine.PopState();
+            var state = gameStateMachine.CheckHasPlayerWon();
+            if (state != null)
+            {
+                gameStateMachine.ResetAndSetState(state);
+            } else
+            {
+                gameStateMachine.PopState();
+            }
         }
         yield break;
     }

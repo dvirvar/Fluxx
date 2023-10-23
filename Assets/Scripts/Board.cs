@@ -220,6 +220,7 @@ public class Board : MonoBehaviour
     public Stack<Card> GetDeckCards() => deckCards;
     public List<Card> GetDiscardPileCards() => discardPileCards;
     public Vector3 GetDiscardPilePosition() => discardPileTransform.position;
+    public Quaternion GetDiscardPileRotation() => discardPileTransform.rotation;
     public List<NewRuleCard> GetNewRuleCards() => newRuleCards;
     public GoalCard GetCurrentGoalCard() => currentGoalCard;
     public GoalCard GetSecondCurrentGoalCard() => secondCurrentGoalCard;

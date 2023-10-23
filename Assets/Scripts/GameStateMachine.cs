@@ -12,10 +12,8 @@ public class GameStateMachine: MonoBehaviour
         Player1,
         Player2,
     }
-    GameUI gameUI;
+    public GameUI GameUI {  get; private set; }
     InputManager inputManager;
-    public RockPaperScissorsManager RockPaperScissorsManager { get; private set; }
-    public DoubleAgendaManager DoubleAgendaManager { get; private set; }
     new Camera camera;
     Transform cardsHolder;
     public Board Board { get; private set; }
@@ -26,7 +24,7 @@ public class GameStateMachine: MonoBehaviour
         get { return _currentPlayer; }
         private set { 
             _currentPlayer = value;
-            gameUI.SetCurrentPlayer(value == Player.Player1 ? "Player 1" : "Player 2");
+            GameUI.SetCurrentPlayer(value == Player.Player1 ? "Player 1" : "Player 2");
         }
     }
     Player _currentPlayer;
@@ -35,7 +33,7 @@ public class GameStateMachine: MonoBehaviour
         get { return _played; }
         private set { 
             _played = value;
-            gameUI.SetPlayed(value.ToString());
+            GameUI.SetPlayed(value.ToString());
         } 
     }
     int _played = 0;
@@ -126,6 +124,9 @@ public class GameStateMachine: MonoBehaviour
     }
     public NewRuleCardType? CurrentPlayRule { get; private set; }
     public NewRuleCardType? CurrentDrawRule { get; private set; }
+    public NewRuleCardType? CurrentHandLimitRule { get; private set; }
+    public NewRuleCardType? CurrentKeeperLimitRule { get; private set; }
+
     [HideInInspector] public bool Inflation = false;
     [HideInInspector] public bool IsFirstPlayRandom = false;
     [HideInInspector] public bool HasDoubleAgenda = false;
@@ -136,12 +137,10 @@ public class GameStateMachine: MonoBehaviour
     [HideInInspector] public bool PoorBonus = false;
     bool isAnotherTurn = false;
 
-    public void StartGame(GameUI gameUI, InputManager inputManager, RockPaperScissorsManager rockPaperScissorsManager, DoubleAgendaManager doubleAgendaManager, Camera camera, Transform cardsHolder, Board board)
+    public void StartGame(GameUI gameUI, InputManager inputManager, Camera camera, Transform cardsHolder, Board board)
     {
-        this.gameUI = gameUI;
+        GameUI = gameUI;
         this.inputManager = inputManager;
-        RockPaperScissorsManager = rockPaperScissorsManager;
-        DoubleAgendaManager = doubleAgendaManager;
         this.camera = camera;
         this.cardsHolder = cardsHolder;
         Board = board;
@@ -230,10 +229,15 @@ public class GameStateMachine: MonoBehaviour
             CurrentPlayer = CurrentPlayer == Player.Player1 ? Player.Player2 : Player.Player1;
         }
         ResetDrawedAndPlayed();
-        var lea = camera.transform.localEulerAngles;
-        camera.transform.localEulerAngles = new Vector3(lea.x, CurrentPlayer == Player.Player1 ? 0 : 180, lea.z);
+        SetCameraFacing(CurrentPlayer);
         inputManager.ReturnToCameraOrigin();
-        inputManager.SetInverse(CurrentPlayer == Player.Player2);
+    }
+
+    public void SetCameraFacing(Player player)
+    {
+        var lea = camera.transform.localEulerAngles;
+        camera.transform.localEulerAngles = new Vector3(lea.x, player == Player.Player1 ? 0 : 180, lea.z);
+        inputManager.SetInverse(player == Player.Player2);
     }
 
     public void LookAtDiscardPile(bool look)
@@ -242,6 +246,7 @@ public class GameStateMachine: MonoBehaviour
         if (!look)
         {
             inputManager.ReturnToCameraOrigin();
+            SetCameraFacing(CurrentPlayer);
         }
     }
 
@@ -285,6 +290,28 @@ public class GameStateMachine: MonoBehaviour
         }
         Assert.IsTrue(rule.Value.GetRuleType() == RuleType.Draw);
         CurrentDrawRule = rule;
+    }
+
+    public void SetCurrentHandLimitRule(NewRuleCardType? rule)
+    {
+        if (rule == null)
+        {
+            CurrentHandLimitRule = null;
+            return;
+        }
+        Assert.IsTrue(rule.Value.GetRuleType() == RuleType.HandLimit);
+        CurrentHandLimitRule = rule;
+    }
+
+    public void SetCurrentKeeperLimitRule(NewRuleCardType? rule)
+    {
+        if (rule == null)
+        {
+            CurrentKeeperLimitRule = null;
+            return;
+        }
+        Assert.IsTrue(rule.Value.GetRuleType() == RuleType.KeeperLimit);
+        CurrentKeeperLimitRule = rule;
     }
 
     public State DiscardNewRules(List<NewRuleCard> discardedRules)
@@ -336,6 +363,14 @@ public class GameStateMachine: MonoBehaviour
         else if (ruleType == RuleType.Play)
         {
             SetCurrentPlayRule(null);
+        }
+        else if (ruleType == RuleType.HandLimit)
+        {
+            SetCurrentHandLimitRule(null);
+        }
+        else if (ruleType == RuleType.KeeperLimit)
+        {
+            SetCurrentKeeperLimitRule(null);
         }
         else if (ruleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.Inflation)
         {
@@ -393,7 +428,7 @@ public class GameStateMachine: MonoBehaviour
         cardsHolder.gameObject.SetActive(show);
     }
 
-    public Player? CheckHasPlayerWon()
+    public PlayerWonState CheckHasPlayerWon()
     {
         var goalsList = new List<GoalCardInfo>();
         var currentGoalCard = Board.GetCurrentGoalCard();
@@ -525,7 +560,7 @@ public class GameStateMachine: MonoBehaviour
         }
         if (playersMatchingGoals.Count == 1)
         {
-            return playersMatchingGoals.First();
+            return new PlayerWonState(playersMatchingGoals.First());
         }
         return null;
     }

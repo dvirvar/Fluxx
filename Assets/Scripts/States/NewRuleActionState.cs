@@ -40,13 +40,23 @@ public class NewRuleActionState : State
                 gameStateMachine.SetState(new RecyclingState());
                 break;
             case NewRuleCardType.SwapPlaysForDraws:
-                var cardsToDraw = Math.Min(gameStateMachine.CurrentPlays - gameStateMachine.Played, gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count);
+                var board = gameStateMachine.Board;
+                var cardsToDraw = Math.Min(gameStateMachine.CurrentPlays - gameStateMachine.Played, board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count);
                 for (var i = 0; i < cardsToDraw; ++i)
                 {
-                    var drawedCard = gameStateMachine.Board.DrawCard();
+                    var drawedCard = board.DrawCard();
                     if (drawedCard != null)
                     {
-                        gameStateMachine.Board.AddHandCardTo(gameStateMachine.CurrentPlayer, drawedCard);
+                        board.AddHandCardTo(gameStateMachine.CurrentPlayer, drawedCard);
+                    }
+                }
+                if ((board.GetCurrentGoalCard() != null && board.GetCurrentGoalCard().GoalCardInfo.GoalType == GoalCardType.TenCardsInHand) || (board.GetSecondCurrentGoalCard() != null && board.GetSecondCurrentGoalCard().GoalCardInfo.GoalType == GoalCardType.TenCardsInHand))
+                {
+                    var state = gameStateMachine.CheckHasPlayerWon();
+                    if (state != null)
+                    {
+                        gameStateMachine.ResetAndSetState(state);
+                        break;
                     }
                 }
                 gameStateMachine.ResetAndSetState(new ChangeCurrentPlayerState());

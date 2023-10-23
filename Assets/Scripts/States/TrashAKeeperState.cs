@@ -72,11 +72,14 @@ public class TrashAKeeperState : State
                     break;
                 }
             }
-            if (gameStateMachine.CheckHasPlayerWon() != null)
+            var state = gameStateMachine.CheckHasPlayerWon();
+            if (state != null)
             {
-                Debug.Log($"{gameStateMachine.CheckHasPlayerWon()} has won");
+                gameStateMachine.ResetAndSetState(state);
+            } else
+            {
+                gameStateMachine.PopState();
             }
-            gameStateMachine.PopState();
         }
         yield break;
     }

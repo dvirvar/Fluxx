@@ -36,7 +36,7 @@ public class InputManager : MonoBehaviour
     {
         this.discardPileControl = discardPileControl;
         if (discardPileControl) {
-            camera.transform.position = board.GetDiscardPilePosition() + new Vector3(0,5,0);
+            camera.transform.SetPositionAndRotation(board.GetDiscardPilePosition() + new Vector3(0,5,0), board.GetDiscardPileRotation());
             currentPileIndex = board.GetDiscardPileCards().Count - 1;
         } else
         {

@@ -3,10 +3,29 @@ using UnityEngine;
 
 public class ChangeCurrentPlayerState : State
 {
+    bool comingFromHandLimitRule = false;
+    bool comingFromKeeperLimitRule = false;
     public override IEnumerator OnEnter(GameStateMachine gameStateMachine)
     {
+        if (gameStateMachine.CurrentHandLimitRule.HasValue)
+        {
+            comingFromHandLimitRule = true;
+            gameStateMachine.PushState(new HandLimitState(gameStateMachine.CurrentPlayer));
+            yield break;
+        }
+        if (gameStateMachine.CurrentKeeperLimitRule.HasValue)
+        {
+            comingFromKeeperLimitRule = true;
+            gameStateMachine.PushState(new KeeperLimitState(gameStateMachine.CurrentPlayer));
+            yield break;
+        }
+        yield return StartOfTurn(gameStateMachine);
+    }
+
+    IEnumerator StartOfTurn(GameStateMachine gameStateMachine)
+    {
         gameStateMachine.AdvanceTurn();
-        foreach(var rule in gameStateMachine.Board.GetNewRuleCards())
+        foreach (var rule in gameStateMachine.Board.GetNewRuleCards())
         {
             rule.SetCanBeSelected(rule.NewRuleCardInfo.NewRuleType.Actionable());
         }
@@ -23,16 +42,11 @@ public class ChangeCurrentPlayerState : State
             }
         }
         gameStateMachine.DrawToMatchDraws();
-        var won = gameStateMachine.CheckHasPlayerWon();
-        if (won != null)
+        var state = gameStateMachine.CheckHasPlayerWon();
+        if (state != null)
         {
-            Debug.Log($"{won.Value} has won");
-        }
-        if (gameStateMachine.CurrentPlays == 0)
-        {
-            Debug.Log("0 current plays");
-        }
-        if (gameStateMachine.IsFirstPlayRandom)
+            gameStateMachine.ResetAndSetState(state);
+        } else if (gameStateMachine.IsFirstPlayRandom && gameStateMachine.CurrentPlays > 1 && gameStateMachine.Board.GetPlayerHandCards(gameStateMachine.CurrentPlayer).Count > 1)
         {
             gameStateMachine.PushState(new FirstPlayRandomState());
         }
@@ -45,7 +59,22 @@ public class ChangeCurrentPlayerState : State
 
     public override IEnumerator OnResume(GameStateMachine gameStateMachine)
     {
-        gameStateMachine.SetState(new StartOfPlayState());
+        if (comingFromHandLimitRule && gameStateMachine.CurrentKeeperLimitRule.HasValue)
+        {
+            comingFromHandLimitRule = false;
+            comingFromKeeperLimitRule = true;
+            gameStateMachine.PushState(new KeeperLimitState(gameStateMachine.CurrentPlayer));
+            yield break;
+        }
+        if (comingFromHandLimitRule || comingFromKeeperLimitRule)
+        {
+            comingFromHandLimitRule = false;
+            comingFromKeeperLimitRule = false;
+            yield return StartOfTurn(gameStateMachine);
+        } else
+        {
+            gameStateMachine.SetState(new StartOfPlayState());
+        }
         yield break;
     }
 

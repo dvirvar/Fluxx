@@ -29,9 +29,11 @@ public class HandCardActionState : State
             case KeeperCard keeperCard:
                 gameStateMachine.Board.AddKeeperTo(gameStateMachine.CurrentPlayer, keeperCard);
                 keeperCard.SetCanBeSelected(false);
-                if (gameStateMachine.CheckHasPlayerWon() != null)
+                var state = gameStateMachine.CheckHasPlayerWon();
+                if (state != null)
                 {
-                    Debug.Log($"{gameStateMachine.CheckHasPlayerWon()} has won");
+                    gameStateMachine.ResetAndSetState(state);
+                    yield break;
                 }
                 break;
             case GoalCard goalCard:
@@ -117,46 +119,61 @@ public class HandCardActionState : State
                 yield break;
             case NewRuleCard newRuleCard:
                 gameStateMachine.Board.AddNewRule(newRuleCard);
-                var ruleType = newRuleCard.NewRuleCardInfo.NewRuleType.GetRuleType();
+                var newRuleType = newRuleCard.NewRuleCardInfo.NewRuleType;
+                newRuleCard.SetCanBeSelected(newRuleType.Actionable());
+                var ruleType = newRuleType.GetRuleType();
                 if (ruleType == RuleType.Draw)
                 {
-                    gameStateMachine.SetCurrentDrawRule(newRuleCard.NewRuleCardInfo.NewRuleType);
+                    gameStateMachine.SetCurrentDrawRule(newRuleType);
                     gameStateMachine.DrawToMatchDraws();
                 }
                 else if (ruleType == RuleType.Play)
                 {
-                    gameStateMachine.SetCurrentPlayRule(newRuleCard.NewRuleCardInfo.NewRuleType);
+                    gameStateMachine.SetCurrentPlayRule(newRuleType);
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.Inflation)
+                else if (ruleType == RuleType.HandLimit)
+                {
+                    gameStateMachine.SetCurrentHandLimitRule(newRuleType);
+                    var otherPlayer = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1 ? GameStateMachine.Player.Player2 : GameStateMachine.Player.Player1;
+                    gameStateMachine.SetState(new HandLimitState(otherPlayer));
+                    yield break;
+                }
+                else if (ruleType == RuleType.KeeperLimit)
+                {
+                    gameStateMachine.SetCurrentKeeperLimitRule(newRuleType);
+                    var otherPlayer = gameStateMachine.CurrentPlayer == GameStateMachine.Player.Player1 ? GameStateMachine.Player.Player2 : GameStateMachine.Player.Player1;
+                    gameStateMachine.SetState(new KeeperLimitState(otherPlayer));
+                    yield break;
+                }
+                else if (newRuleType == NewRuleCardType.Inflation)
                 {
                     gameStateMachine.Inflation = true;
                     gameStateMachine.DrawToMatchDraws();
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.FirstPlayRandom)
+                else if (newRuleType == NewRuleCardType.FirstPlayRandom)
                 {
                     gameStateMachine.IsFirstPlayRandom = true;
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.DoubleAgenda)
+                else if (newRuleType == NewRuleCardType.DoubleAgenda)
                 {
                     gameStateMachine.HasDoubleAgenda = true;
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.NoHandBonus)
+                else if (newRuleType == NewRuleCardType.NoHandBonus)
                 {
                     gameStateMachine.NoHandBonus = true;
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.RichBonus)
+                else if (newRuleType == NewRuleCardType.RichBonus)
                 {
                     gameStateMachine.RichBonus = true;
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PartyBonus)
+                else if (newRuleType == NewRuleCardType.PartyBonus)
                 {
                     gameStateMachine.PartyBonus = true;
                 }
-                else if (newRuleCard.NewRuleCardInfo.NewRuleType == NewRuleCardType.PoorBonus)
+                else if (newRuleType == NewRuleCardType.PoorBonus)
                 {
                     gameStateMachine.PoorBonus = true;
                 }
-                newRuleCard.SetCanBeSelected(newRuleCard.NewRuleCardInfo.NewRuleType.Actionable());
                 break;
         }
         gameStateMachine.PopState();

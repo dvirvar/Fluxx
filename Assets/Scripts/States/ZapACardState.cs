@@ -62,7 +62,15 @@ public class ZapACardState : State
                 {
                     gameStateMachine.Board.RearrangePlayerKeepers(player);
                     gameStateMachine.Board.AddHandCardTo(gameStateMachine.CurrentPlayer, keeperCard);
-                    gameStateMachine.PopState();
+                    var state = gameStateMachine.CheckHasPlayerWon();
+                    if (state != null)
+                    {
+                        gameStateMachine.ResetAndSetState(state);
+                    }
+                    else
+                    {
+                        gameStateMachine.PopState();
+                    }
                     yield break;
                 }
             }
